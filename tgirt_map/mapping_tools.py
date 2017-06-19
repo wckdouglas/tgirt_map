@@ -3,6 +3,7 @@ import os
 import sys
 import time
 from collections import defaultdict
+import re
 
 class sample_object():
     def __init__(self, args):

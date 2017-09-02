@@ -67,7 +67,7 @@ def main():
     process_sample.make_result_dir()
 
     if not args.skip_trim:
-	    process_sample.trimming()
+    	process_sample.trimming()
 
 	if not args.skip_premap:
 	    process_sample.premap_tRNA_rRNA()
@@ -76,20 +76,20 @@ def main():
 	    process_sample.hisat_map()
 
 	if not args.skip_bowtie:
-    	process_sample.bowtie_map()
+		process_sample.bowtie_map()
 
-    if not args.skip_post_process_bam:
-	    process_sample.combined_aligned()
-    	process_sample.combined_filter()
-    	process_sample.make_alignment_bed()
-    
-    if not args.skip_remap:
-	    process_sample.generate_tRNA_remap()
+	if not args.skip_post_process_bam:
+		process_sample.combined_aligned()
+		process_sample.combined_filter()
+		process_sample.make_alignment_bed()
 
-    if not args.skip_count:
-	    process_sample.generate_tRNA_count()
-    	process_sample.generate_rRNA_count()
-    	process_sample.generate_all_count()
+	if not args.skip_remap:
+		process_sample.generate_tRNA_remap()
+
+	if not args.skip_count:
+		process_sample.generate_tRNA_count()
+		process_sample.generate_rRNA_count()
+		process_sample.generate_all_count()
 
     end = time.time()
     usedTime = end - start

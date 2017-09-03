@@ -266,11 +266,11 @@ def system_run(dry, samplename, command):
 		return 0
 
 	else:
-    	start = time.time()
-    	os.system(command)
-    	end = time.time() - start
-    	print >> sys.stderr, '[%s] Used time %.3f min' %(samplename, end/60)
-    return 0
+		start = time.time()
+		os.system(command)
+		end = time.time() - start
+		print >> sys.stderr, '[%s] Used time %.3f min' %(samplename, end/60)
+		return 0
 
 
 def makeFolder(folder):

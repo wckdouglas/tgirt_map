@@ -53,7 +53,7 @@ def getopt():
     					help = 'DEBUG: skip hisat')
     parser.add_argument('--skip_bowtie', action='store_true',  
     					help = 'DEBUG: skip bowtie')
-    parser.add_argument('--skip_post_procests_bam', action='store_true',  
+    parser.add_argument('--skip_post_process_bam', action='store_true',  
     					help = 'DEBUG: skip combining BAM, multimap reassignment and BED file conversion')
     parser.add_argument('--skip_remap', action='store_true',  
     					help = 'DEBUG: skip tRNA/rRNA remapping')

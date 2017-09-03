@@ -53,7 +53,7 @@ class sample_object():
         self.rRNA_fastq1 = '%s/rRNA.1.fq' %self.rRNA_tRNA_out
         self.rRNA_fastq2 = '%s/rRNA.2.fq' %self.rRNA_tRNA_out
 
-        self.self.run_process = partial(system_run, dry)
+        self.self.run_process = partial(system_run, args.dry)
 
     def make_result_dir(self):
         folders = [self.outpath, self.trim_folder, self.count_folder, self.count_raw,
@@ -266,11 +266,11 @@ def system_run(dry, samplename, command):
 		return 0
 
 	else:
-		start = time.time()
-		os.system(command)
-		end = time.time() - start
-		print >> sys.stderr, '[%s] Used time %.3f min' %(samplename, end/60)
-		return 0
+    	start = time.time()
+    	os.system(command)
+    	end = time.time() - start
+    	print >> sys.stderr, '[%s] Used time %.3f min' %(samplename, end/60)
+    return 0
 
 
 def makeFolder(folder):

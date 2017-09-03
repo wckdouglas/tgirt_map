@@ -53,7 +53,7 @@ class sample_object():
         self.rRNA_fastq1 = '%s/rRNA.1.fq' %self.rRNA_tRNA_out
         self.rRNA_fastq2 = '%s/rRNA.2.fq' %self.rRNA_tRNA_out
 
-        self.self.run_process = partial(system_run, args.dry)
+        self.run_process = partial(system_run, args.dry)
 
     def make_result_dir(self):
         folders = [self.outpath, self.trim_folder, self.count_folder, self.count_raw,

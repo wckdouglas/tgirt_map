@@ -40,6 +40,11 @@ def getopt():
     					help = 'bowtie2 index for rRNA and tRNA combined', required=True)
     parser.add_argument('-p', '--threads', default=1, type=int, 
     					help = 'number of cores to be used for the pipeline (default:1)')
+    parser.add_argument('--TTN', action='store_true',  
+    					help = 'used TTN primer')
+    parser.add_argument('--umi', default=0, type=int,
+    					help = "Number of UMI bases from 5' of R1 (default = 0)")
+    parser.add_argument('--dry', action='store_true', help = "Dry run")
     parser.add_argument('--skip_trim', action='store_true',  
     					help = 'DEBUG: skip trimming')
     parser.add_argument('--skip_premap', action='store_true',  

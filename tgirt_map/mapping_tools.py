@@ -3,6 +3,7 @@ import os
 import sys
 import time
 from collections import defaultdict
+from functools import partial
 import re
 
 class sample_object():
@@ -19,6 +20,9 @@ class sample_object():
         self.rRNA_index = args.rRNAindex
         self.rRNA_tRNA_index = args.rRNA_tRNA_index
         self.threads = args.threads
+        self.UMI = args.umi
+        self.TTN = args.TTN
+        self.dry = args.dry
 
         #### make folder
         self.trim_folder = self.outpath + '/Trim'
@@ -49,6 +53,7 @@ class sample_object():
         self.rRNA_fastq1 = '%s/rRNA.1.fq' %self.rRNA_tRNA_out
         self.rRNA_fastq2 = '%s/rRNA.2.fq' %self.rRNA_tRNA_out
 
+        self.self.run_process = partial(system_run, dry)
 
     def make_result_dir(self):
         folders = [self.outpath, self.trim_folder, self.count_folder, self.count_raw,
@@ -56,13 +61,30 @@ class sample_object():
                 self.bowtie_out, self.combined_out, self.tRNA_out, self.rRNA_out]
         mf = map(makeFolder, folders)
 
+
     def trimming(self):
-        R1 = 'AAGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
-        R2 = 'GATCGTCGGACTGTAGAACTCTGAACGTGTAGA'
-        command = 'cutadapt -m 15 -O 5 -n 3 -q 20 -b {R1} -B {R2} -o {trimed1} -p {trimed2} {file1} {file2}'\
-            .format(R1=R1, R2=R2, trimed1=self.trimed1, trimed2=self.trimed2,
+    	R1 = 'AAGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
+    	R2 = 'GATCGTCGGACTGTAGAACTCTGAACGTGTAGA'
+    	if self.TTN:
+    		option='-U 1'
+    	else:
+    		option = ''	
+
+    	if self.UMI == 0:
+        	command = 'cutadapt -m 15 -O 5 -n 3 {option} -q 20 -b {R1} -B {R2} -o {trimed1} -p {trimed2} {file1} {file2}'\
+            	.format(R1=R1, R2=R2, option= option,
+            		trimed1=self.trimed1, trimed2=self.trimed2,
                     file1= self.fastq1, file2= self.fastq2)
-        run_process(self.samplename, command)
+        else:
+        	command = '''
+        		clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} 
+        					--barcodeCutOff=20 --outputprefix=- --prefix_split=0 -r read1
+        		| cutadapt -m 15 -O 5 -n 3 {option} -q 20 -b {R1} -B {R2} -o /dev/stdout --quiet /dev/stdin 
+        		| deinterleave_fastq.py - {trimed1} {trimed2} '''.format(R1=R1, R2=R2, 
+        			umi=self.UMI * 'X', option = option,
+            		trimed1=self.trimed1, trimed2=self.trimed2,
+                    file1= self.fastq1, file2= self.fastq2)
+        self.run_process(self.samplename, command)
 
     def premap_tRNA_rRNA(self):
         command = 'bowtie2 -p {threads} -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
@@ -71,7 +93,7 @@ class sample_object():
                                                                     trimed1=self.trimed1, trimed2=self.trimed2) +\
             '| samtools view -bS@{threads} - '.format(threads=self.threads)+\
             '> {rRNA_tRNA_out}/tRNA_rRNA.bam'.format(rRNA_tRNA_out = self.rRNA_tRNA_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
 
         ##extract tr/RNA reads
@@ -80,20 +102,20 @@ class sample_object():
             "| awk '$1~\"^@\" || $3~/gi\||rRNA/'" +\
             '| samtools view -b '+\
             '| bamToFastq -fq {rRNA_FASTQ1} -fq2 {rRNA_FASTQ2} -i -'.format(rRNA_FASTQ1=self.rRNA_fastq1, rRNA_FASTQ2=self.rRNA_fastq2)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         command = 'samtools view -h -F4 {rRNA_tRNA_out}/tRNA_rRNA.bam '.format(rRNA_tRNA_out=self.rRNA_tRNA_out)+\
             "| awk '$1~\"^@\" || $2 == 83 || $2 == 163 || $2 == 99 || $2 == 147'" +\
             "| awk '$1~\"^@\" || $3!~/gi\||rRNA/'" +\
             '| samtools view -b '+\
             '| bamToFastq -fq {TRNA_FASTQ1} -fq2 {TRNA_FASTQ2} -i -'.format(TRNA_FASTQ1=self.tRNA_fastq1, TRNA_FASTQ2=self.tRNA_fastq2)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         ##extract non tRNA/rRNA reads
         command = 'samtools view -bf4 {rRNA_tRNA_out}/tRNA_rRNA.bam'.format(rRNA_tRNA_out=self.rRNA_tRNA_out)+\
             '| bamToFastq -fq {PREMAP_FASTQ1} -fq2 {PREMAP_FASTQ2} -i - '.format(PREMAP_FASTQ1=self.premap_fastq1,
                                                                                 PREMAP_FASTQ2=self.premap_fastq2)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
     def hisat_map(self):
         # map reads
@@ -102,18 +124,18 @@ class sample_object():
 	        '--novel-splicesite-outfile {hisat_out}/novelsite.txt -x {ref} -1 {PREMAP_FASTQ1} -2 {PREMAP_FASTQ2} '\
                .format(hisat_out=self.hisat_out, ref=self.hisat_index, PREMAP_FASTQ1=self.premap_fastq1, PREMAP_FASTQ2=self.premap_fastq2) +\
 	        '| samtools view -bS - > {hisat_out}/hisat.bam'.format(hisat_out=self.hisat_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         #split to uniq and multimap
         command = 'split_uniq_bam.py -i {hisat_out}/hisat.bam -o {hisat_out}/hisat -a hisat2'.format(hisat_out=self.hisat_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         #extract unaligned
         command = 'samtools view -@ {threads} -bf4 {hisat_out}/hisat.bam'.format(threads=self.threads, hisat_out=self.hisat_out) + \
                 '| bamToFastq -i - -fq {bowtie_out}/unmapped.1.fq -fq2 {bowtie_out}/unmapped.2.fq'.format(bowtie_out=self.bowtie_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
         command = 'gzip -f {bowtie_out}/unmapped.1.fq;gzip -f {bowtie_out}/unmapped.2.fq'.format(bowtie_out=self.bowtie_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
     def bowtie_map(self):
         # map reads
@@ -121,26 +143,26 @@ class sample_object():
             '--no-mixed --no-discordant -x {index} -1 {fq_path}/unmapped.1.fq.gz -2 {fq_path}/unmapped.2.fq.gz'\
                 .format(index=self.bowtie2_index, fq_path = self.bowtie_out) +\
             '| samtools view -@{threads} -bS - > {bowtie_out}/bowtie2.bam'.format(threads=self.threads, bowtie_out=self.bowtie_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         # split to uniq and multimap
         command = 'split_uniq_bam.py -i {bowtie_out}/bowtie2.bam -o {bowtie_out}/bowtie -a bowtie2'.format(bowtie_out=self.bowtie_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
     def combined_aligned(self):
         command = 'samtools cat %s/hisat.multi.bam %s/bowtie.multi.bam ' %(self.hisat_out, self.bowtie_out)+\
             ' > %s/multi.bam' %(self.combined_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         command = 'reduce_multi_reads.py --infile {combined_out}/multi.bam --outfile {combined_out}/multi_filtered.bam '\
                     .format(combined_out = self.combined_out) +\
                 ' --bam_in --bam_out'
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         command ='samtools cat %s/multi_filtered.bam %s/hisat.unique.bam %s/bowtie.unique.bam' %(self.combined_out, self.hisat_out, self.bowtie_out) +\
             '| samtools sort -n -@ 24 -O bam -T %s/temp ' %(self.combined_out) +\
             '> %s/primary.bam' %(self.combined_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
 
     def combined_filter(self):
@@ -148,48 +170,48 @@ class sample_object():
         ### filter out tRNA
         command = 'bedtools pairtobed -s -f 0.01 -abam {combined_path}/primary.bam -b {bed_path}/tRNA.bed > {tRNA_path}/tRNA_primary.bam' \
                 .format(combined_path = self.combined_out, bed_path = self.bedpath, tRNA_path=self.tRNA_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         ### filter out rRNA
         command = 'bedtools pairtobed -s -f 0.01 -abam {combined_path}/primary.bam -b {bed_path}/rRNA_for_bam_filter.bed > {rRNA_path}/rRNA_primary.bam' \
                 .format(combined_path = self.combined_out, bed_path = self.bedpath, rRNA_path=self.rRNA_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         ### filter out tRNA
         command = 'bedtools pairtobed -s -f 0.01 -abam {combined_path}/primary.bam -b {bed_path}/sncRNA_no_tRNA.bed > {combined_path}/sncRNA.bam' \
                 .format(combined_path = self.combined_out, bed_path = self.bedpath)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         ### filter out long RNA
         command = 'bedtools pairtobed -s -f 0.01 -type neither -abam {combined_path}/primary.bam -b {bed_path}/sncRNA_rRNA_for_bam_filter.bed > {combined_path}/primary_no_sncRNA_tRNA_rRNA.bam' \
                 .format(combined_path = self.combined_out, bed_path = self.bedpath)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
 
     def make_alignment_bed(self):
         command = 'bam_to_bed.py -i {combined_out}/sncRNA.bam -o {combined_out}/sncRNA.bed -m 5 -M 1000000'.format(combined_out=self.combined_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         command = 'bam_to_bed.py -i {combined_out}/primary_no_sncRNA_tRNA_rRNA.bam  -o {combined_out}/primary_no_sRNAs.bed -m 5 -M 1000000'.format(combined_out=self.combined_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
     def generate_tRNA_remap(self):
         # tRNA reads process
         command = 'bamToFastq -i {tRNA_path}/tRNA_primary.bam -fq {tRNA_path}/tRNA.1.fq -fq2 {tRNA_path}/tRNA.2.fq'.format(tRNA_path =self.tRNA_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
         command = 'cat {tRNA_fastq1} {tRNA_path}/tRNA.1.fq | gzip > {tRNA_path}/tRNA.1.fq.gz'.format(tRNA_fastq1=self.tRNA_fastq1, tRNA_path=self.tRNA_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
         command = 'cat {tRNA_fastq2} {tRNA_path}/tRNA.2.fq | gzip > {tRNA_path}/tRNA.2.fq.gz'.format(tRNA_fastq2=self.tRNA_fastq2, tRNA_path=self.tRNA_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         command = 'bowtie2 -p {threads} --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
                 '--norc --no-mixed --no-discordant -x {tRNA_index} '.format(tRNA_index=self.tRNA_index)+\
                 '-1 {tRNA_path}/tRNA.1.fq.gz -2 {tRNA_path}/tRNA.2.fq.gz | samtools view -bS@ {threads} - > {tRNA_path}/tRNA_remap.bam'\
                     .format(tRNA_path=self.tRNA_out, threads=self.threads)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         command = 'bam_to_bed.py -i {tRNA_path}/tRNA_remap.bam  -o {tRNA_path}/tRNA.bed -m 5 -M 10000'.format(tRNA_path=self.tRNA_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
     def generate_tRNA_count(self):
         tRNA_count = defaultdict(int)
@@ -208,43 +230,47 @@ class sample_object():
 
     def generate_rRNA_count(self):
         command = 'bamToFastq -fq {rRna_path}/rRNA.1.fq -fq2 {rRna_path}/rRNA.2.fq -i {rRna_path}/rRNA_primary.bam'.format(rRna_path=self.rRNA_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
         command = 'cat {rRNA_fastq1} {rRNA_path}/rRNA.1.fq | gzip > {rRNA_path}/rRNA.1.fq.gz'.format(rRNA_fastq1=self.rRNA_fastq1, rRNA_path=self.rRNA_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
         command = 'cat {rRNA_fastq2} {rRNA_path}/rRNA.2.fq | gzip > {rRNA_path}/rRNA.2.fq.gz'.format(rRNA_fastq2=self.rRNA_fastq2, rRNA_path=self.rRNA_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         command = 'bowtie2 -p {threads} -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
             '--no-mixed --no-discordant -x {rRNA_index} '.format(rRNA_index=self.rRNA_index) +\
             '-1 {rRNA_path}/rRNA.1.fq.gz -2 {rRNA_path}/rRNA.2.fq.gz '.format(rRNA_path=self.rRNA_out)+\
             '| samtools view -bS@ {threads} - > {rRNA_path}/rRNA_remap.bam'.format(rRNA_path=self.rRNA_out, threads=self.threads)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         command = 'bam_to_bed.py -i {rRNA_path}/rRNA_remap.bam  -o {rRNA_path}/rRNA.bed -m 5 -M 1000000'.format(rRNA_path=self.rRNA_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         command = 'bedtools coverage -s -counts -F 0.1 -a {bed_path}/rRNA.bed -b {rRNA_path}/rRNA.bed > {rRNA_path}/rRNA.counts'.format(bed_path=self.bedpath, rRNA_path=self.rRNA_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
     def generate_all_count(self):
         command = 'bedtools coverage -s -counts -F 0.1 -a {bed_path}/sncRNA_no_tRNA.bed '.format(bed_path=self.bedpath)+\
             '-b {combined}/sncRNA.bed > {combined}/sncRNA.counts'.format(combined=self.combined_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
         command = 'bedtools coverage -s -counts -F 0.1 -a {bed_path}/genes_no_sncRNA_rRNA_tRNA.bed '.format(bed_path=self.bedpath)+\
             '-b {combined}/primary_no_sRNAs.bed > {combined}/non_sRNAs.counts'.format(combined=self.combined_out)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
         command = 'cat {combined}/non_sRNAs.counts {combined}/sncRNA.counts {rRNA_path}/rRNA.counts '.format(combined=self.combined_out, rRNA_path=self.rRNA_out) +\
             '> {count_path}/{samplename}.counts'.format(count_path=self.count_raw, samplename = self.samplename)
-        run_process(self.samplename, command)
+        self.run_process(self.samplename, command)
 
-def run_process(samplename, command):
-    print >> sys.stderr, '[%s] Running: %s' %(samplename, command)
-    start = time.time()
-    os.system(command)
-    end = time.time() - start
-    print >> sys.stderr, '[%s] Used time %.3f min' %(samplename, end/60)
-    return 0
+def system_run(dry, samplename, command):
+	print >> sys.stderr, '[%s] Running: %s' %(samplename, command)
+	if dry:
+		return 0
+
+	else:
+		start = time.time()
+		os.system(command)
+		end = time.time() - start
+		print >> sys.stderr, '[%s] Used time %.3f min' %(samplename, end/60)
+		return 0
 
 
 def makeFolder(folder):

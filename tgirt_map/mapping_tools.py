@@ -174,7 +174,7 @@ class sample_object():
         umi_text = self.combined_out + '/primary.umi_metrics'
         duplicate_text = self.combined_out + '/primary.duplicate_metrics'
 
-        umi_command = 'bam_umi_tag.py --in_bam %s --out_bam - --tag RX ' %tag_bam + \
+        umi_command = 'bam_umi_tag.py --in_bam %s --out_bam - --tag RX ' %bam_file + \
                         ' | picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true '+\
                         ' INPUT=/dev/stdin OUTPUT=/dev/stdout'   +\
                         '> %s' %(tag_bam)
@@ -253,7 +253,7 @@ class sample_object():
                                 'METRICS_FILE=%s/tRNA.duplicate_metrics REMOVE_DUPLICATES=false ASSUME_SORT_ORDER=coordinate' %(self.tRNA_out)   +\
                                 '| samtools sort -n@ {threads} -T {tRNA_path}/tRNA -O bam - > {tRNA_path}/tRNA_remap.dedup.bam'.format(threads=self.threads, tRNA_path=self.tRNA_out) 
                 self.run_process(dedup_command)
-                command = 'bam_to_bed.py -i {tRNA_path}/tRNA_remap.dedup.bam  -o {tRNA_path}/tRNA.bed -m 5 -M 10000'.format(tRNA_path=self.tRNA_out)
+                command = 'samtools view -bF 1024 {tRNA_path}/tRNA_remap.dedup.bam | bam_to_bed.py -i - -o {tRNA_path}/tRNA.bed -m 5 -M 10000'.format(tRNA_path=self.tRNA_out)
                 self.run_process(command)
         else:
                 command = 'bam_to_bed.py -i {tRNA_path}/tRNA_remap.bam  -o {tRNA_path}/tRNA.bed -m 5 -M 10000'.format(tRNA_path=self.tRNA_out)
@@ -303,7 +303,7 @@ class sample_object():
                                 'METRICS_FILE=%s/rRNA.duplicate_metrics REMOVE_DUPLICATES=false ASSUME_SORT_ORDER=coordinate' %(self.rRNA_out)   +\
                                 '| samtools sort -n@ {threads} -T {rRNA_path}/rRNA -O bam - > {rRNA_path}/rRNA_remap.dedup.bam'.format(threads=self.threads, rRNA_path=self.rRNA_out) 
                 self.run_process(dedup_command)
-                command = 'bam_to_bed.py -i {rRNA_path}/rRNA_remap.dedup.bam  -o {rRNA_path}/rRNA.bed -m 5 -M 10000'.format(rRNA_path=self.rRNA_out)
+                command = 'samtools view -bF 1024 {rRNA_path}/rRNA_remap.dedup.bam | bam_to_bed.py -i - -o {rRNA_path}/rRNA.bed -m 5 -M 10000'.format(rRNA_path=self.rRNA_out)
                 self.run_process(command)
         else:
                 command = 'bam_to_bed.py -i {rRNA_path}/rRNA_remap.bam  -o {rRNA_path}/rRNA.bed -m 5 -M 10000'.format(rRNA_path=self.rRNA_out)

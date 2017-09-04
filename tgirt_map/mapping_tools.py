@@ -187,7 +187,7 @@ class sample_object():
         dedup_command = 'picard UmiAwareMarkDuplicatesWithMateCigar UMI_METRICS_FILE=%s ' %(umi_text)+\
                                                 'MAX_EDIT_DISTANCE_TO_JOIN=1 TAG_DUPLICATE_SET_MEMBERS=true' +\
                                                 'UMI_TAG_NAME=RX INPUT=%s OUTPUT=%s ' %(sorted_bam, tag_bam) +\
-                                                'METRICS_FILE=%s REMOVE_DUPLICATES=false ASSUME_SORT_ORDER=coordinate' %(duplicate_metrics)  
+                                                'METRICS_FILE=%s REMOVE_DUPLICATES=false ASSUME_SORT_ORDER=coordinate' %(duplicate_text)  
         resort_command = 'samtools view -F 1024 -b@ %i %s' %(self.threads, dedup_bam)+\
                                 '| samtools sort -n@  %i -O bam -T %s/temp > %s ' %(self.threads, self.combined_out, dedup_bam) 
 
@@ -242,7 +242,7 @@ class sample_object():
                         '| samtools view -bS@ {threads} - > {tRNA_path}/tRNA_remap.bam'.format(tRNA_path=self.tRNA_out, threads=self.threads)
         self.run_process(command)
 
-        if self.umi > 0:
+        if self.UMI > 0:
                 command = ' bam_umi_tag.py --in_bam %s/tRNA_remap.bam --out_bam - --tag RX ' %(self.tRNA_out)+\
                         '| picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true '+\
                         'INPUT=/dev/stdin OUTPUT=/dev/stdout'+\
@@ -262,19 +262,20 @@ class sample_object():
                 command = 'bam_to_bed.py -i {tRNA_path}/tRNA_remap.bam  -o {tRNA_path}/tRNA.bed -m 5 -M 10000'.format(tRNA_path=self.tRNA_out)
                 self.run_process(command)
 
-    def generate_tRNA_count(self, have_umi=True):
+    def generate_tRNA_count(self):
         tRNA_count = defaultdict(int)
         tRNA_bed = self.tRNA_out + '/tRNA.bed'
         tRNA_count_file = self.tRNA_raw + '/' + self.samplename + '.tRNA'
         print >> sys.stderr, 'Reading from %s' %tRNA_bed
-        with open(tRNA_bed,'r') as bed:
+        if not self.dry:
+            with open(tRNA_bed,'r') as bed:
                 for line in bed:
-                        tRNA=line.split('\t')[0]
-                        tRNA_count[tRNA] += 1
+                    tRNA=line.split('\t')[0]
+                    tRNA_count[tRNA] += 1
 
-        with open(tRNA_count_file, 'w') as count_file:
+            with open(tRNA_count_file, 'w') as count_file:
                 for key, value in tRNA_count.iteritems():
-                        count_file.write('%s\t%i\n' %(key, value))
+                    count_file.write('%s\t%i\n' %(key, value))
         print >> sys.stderr, 'Written %s' %tRNA_count_file
 
     def generate_rRNA_count(self):
@@ -291,7 +292,7 @@ class sample_object():
                 '| samtools view -bS@ {threads} - > {rRNA_path}/rRNA_remap.bam'.format(rRNA_path=self.rRNA_out, threads=self.threads)
         self.run_process(command)
 
-        if self.umi > 0:
+        if self.UMI > 0:
                 command = ' bam_umi_tag.py --in_bam %s/rRNA_remap.bam --out_bam - --tag RX ' %(self.rRNA_out)+\
                         '| picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true '+\
                         'INPUT=/dev/stdin OUTPUT=/dev/stdout'+\

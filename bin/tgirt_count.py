@@ -87,6 +87,8 @@ def main():
 		process_sample.combined_aligned()
 		process_sample.combined_filter()
 		process_sample.make_alignment_bed()
+		if self.umi > 0:
+			process_sample.dedup_bam()
 
 	if not args.skip_remap:
 		process_sample.generate_tRNA_remap()

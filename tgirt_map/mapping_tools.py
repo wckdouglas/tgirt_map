@@ -211,12 +211,12 @@ class sample_object():
 
         ### filter out tRNA
         command = 'bedtools pairtobed -s -f 0.01 -abam {count_bam} -b {bed_path}/sncRNA_no_tRNA.bed > {combined_path}/sncRNA.bam' \
-                        .format(count_bam = self.count_bam, bed_path = self.bedpath)
+                        .format(count_bam = self.count_bam, bed_path = self.bedpath, combined_path = self.combined_out)
         self.run_process(command)
 
         ### filter out long RNA
         command = 'bedtools pairtobed -s -f 0.01 -type neither -abam {count_bam} -b {bed_path}/sncRNA_rRNA_for_bam_filter.bed > {combined_path}/primary_no_sncRNA_tRNA_rRNA.bam' \
-                        .format(count_bam = self.count_bam, bed_path = self.bedpath)
+                        .format(count_bam = self.count_bam, bed_path = self.bedpath, combined_path = self.combined_out)
         self.run_process(command)
 
 

@@ -185,7 +185,7 @@ class sample_object():
                         'MAX_EDIT_DISTANCE_TO_JOIN=1 TAG_DUPLICATE_SET_MEMBERS=true' +\
                         'UMI_TAG_NAME=RX INPUT=%s OUTPUT=%s ' %(sorted_bam, tag_bam) +\
                         'METRICS_FILE=%s REMOVE_DUPLICATES=false ASSUME_SORT_ORDER=coordinate' %(duplicate_text)  
-        resort_command = 'samtools view -F 1024 -b@ %i %s' %(self.threads, dedup_bam)+\
+        resort_command = 'samtools view -F 1024 -b@ %i %s' %(self.threads, tag_bam)+\
                                 '| samtools sort -n@  %i -O bam -T %s/temp > %s ' %(self.threads, self.combined_out, dedup_bam) 
 
         self.run_process(umi_command)

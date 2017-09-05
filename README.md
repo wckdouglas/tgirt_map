@@ -16,7 +16,10 @@ pip install git+https://github.com/wckdouglas/tgirt_map.git
 ```
 usage: tgirt_count.py [-h] -1 FASTQ1 -2 FASTQ2 -o OUTDIR -x HISAT_INDEX -y
                       BOWTIE2_INDEX -b BEDPATH -s SPLICESITE -t TRNAINDEX -r
-                      RRNAINDEX -e RRNA_TRNA_INDEX [-p THREADS]
+                      RRNAINDEX -e RRNA_TRNA_INDEX [-p THREADS] [--TTN]
+                      [--umi UMI] [--dry] [--skip_trim] [--skip_premap]
+                      [--skip_hisat] [--skip_bowtie] [--skip_post_process_bam]
+                      [--skip_remap] [--skip_count]
 
 Pipeline for mapping and counting for TGIRT-seq paired end data
 
@@ -48,6 +51,18 @@ optional arguments:
   -p THREADS, --threads THREADS
                         number of cores to be used for the pipeline
                         (default:1)
+  --TTN                 used TTN primer
+  --umi UMI             Number of UMI bases from 5' of R1 (default = 0)
+  --dry                 Dry run
+  --skip_trim           DEBUG: skip trimming
+  --skip_premap         DEBUG: skip premapping tRNA and rRNA
+  --skip_hisat          DEBUG: skip hisat
+  --skip_bowtie         DEBUG: skip bowtie
+  --skip_post_process_bam
+                        DEBUG: skip combining BAM, multimap reassignment and
+                        BED file conversion
+  --skip_remap          DEBUG: skip tRNA/rRNA remapping
+  --skip_count          DEBUG: skip counting
 ```
 
 
@@ -57,3 +72,4 @@ It is necessary to install [TGIRT-seq-tools](https://github.com/wckdouglas/tgirt
 ### building reference ###
 
 Coming soon....
+

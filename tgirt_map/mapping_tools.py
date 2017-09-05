@@ -175,8 +175,8 @@ class sample_object():
         duplicate_text = self.combined_out + '/primary.duplicate_metrics'
 
         umi_command = 'bam_umi_tag.py --in_bam %s --out_bam - --tag RX ' %bam_file + \
-                        ' | picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true '+\
-                        ' INPUT=/dev/stdin OUTPUT=/dev/stdout'   +\
+                        '| picard SortSam I=/dev/stdin O=/dev/stdout SORT_ORDER=queryname '+\
+                        '| picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true INPUT=/dev/stdin OUTPUT=/dev/stdout '   +\
                         '> %s' %(tag_bam)
 
         sort_command = 'samtools sort -@ %i -O bam -T %s/temp %s > %s' %(self.threads, self.combined_out, tag_bam, sorted_bam)
@@ -241,16 +241,16 @@ class sample_object():
 
         if self.UMI > 0:
                 command = ' bam_umi_tag.py --in_bam %s/tRNA_remap.bam --out_bam - --tag RX ' %(self.tRNA_out)+\
-                        '| picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true '+\
-                        'INPUT=/dev/stdin OUTPUT=/dev/stdout'+\
+                        '| picard SortSam I=/dev/stdin O=/dev/stdout SORT_ORDER=queryname '+\
+                        '| picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true INPUT=/dev/stdin OUTPUT=/dev/stdout ' +\
                         '| samtools sort -@ {threads} -T {tRNA_path}/tRNA -O bam > {tRNA_path}/tRNA_remap.sort.bam'.format(threads=self.threads, tRNA_path=self.tRNA_out)
                 self.run_process(command)
                 command = 'samtools index {tRNA_path}/tRNA_remap.sort.bam'.format(tRNA_path=self.tRNA_out) 
                 self.run_process(command)
                 dedup_command = 'picard UmiAwareMarkDuplicatesWithMateCigar UMI_METRICS_FILE=%s/tRNA.umi_metric ' %(self.tRNA_out)+\
-                                'MAX_EDIT_DISTANCE_TO_JOIN=1 TAG_DUPLICATE_SET_MEMBERS=true' +\
+                                'MAX_EDIT_DISTANCE_TO_JOIN=1 TAG_DUPLICATE_SET_MEMBERS=true ' +\
                                 'UMI_TAG_NAME=RX INPUT={tRNA_path}/tRNA_remap.sort.bam OUTPUT=/dev/stdout '.format(tRNA_path=self.tRNA_out) +\
-                                'METRICS_FILE=%s/tRNA.duplicate_metrics REMOVE_DUPLICATES=false ASSUME_SORT_ORDER=coordinate' %(self.tRNA_out)   +\
+                                'METRICS_FILE=%s/tRNA.duplicate_metrics REMOVE_DUPLICATES=false ASSUME_SORT_ORDER=coordinate ' %(self.tRNA_out)   +\
                                 '| samtools sort -n@ {threads} -T {tRNA_path}/tRNA -O bam - > {tRNA_path}/tRNA_remap.dedup.bam'.format(threads=self.threads, tRNA_path=self.tRNA_out) 
                 self.run_process(dedup_command)
                 command = 'samtools view -bF 1024 {tRNA_path}/tRNA_remap.dedup.bam | bam_to_bed.py -i - -o {tRNA_path}/tRNA.bed -m 5 -M 10000'.format(tRNA_path=self.tRNA_out)
@@ -291,8 +291,8 @@ class sample_object():
 
         if self.UMI > 0:
                 command = ' bam_umi_tag.py --in_bam %s/rRNA_remap.bam --out_bam - --tag RX ' %(self.rRNA_out)+\
-                        '| picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true '+\
-                        'INPUT=/dev/stdin OUTPUT=/dev/stdout'+\
+                        '| picard SortSam I=/dev/stdin O=/dev/stdout SORT_ORDER=queryname '+\
+                        '| picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true INPUT=/dev/stdin OUTPUT=/dev/stdout'+\
                         '| samtools sort -@ {threads} -T {rRNA_path}/rRNA -O bam > {rRNA_path}/rRNA_remap.sort.bam'.format(threads=self.threads, rRNA_path=self.rRNA_out)
                 self.run_process(command)
                 command = 'samtools index {rRNA_path}/rRNA_remap.sort.bam'.format(rRNA_path=self.rRNA_out) 

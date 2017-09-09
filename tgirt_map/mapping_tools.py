@@ -68,22 +68,23 @@ class sample_object():
 
 
     def trimming(self):
-        R1 = 'AAGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
-        R2 = 'GATCGTCGGACTGTAGAACTCTGAACGTGTAGA'
+        R2R = 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
+        R1R = 'GATCGTCGGACTGTAGAACTCTGAACGTGTAGA'
         if self.TTN:
                 option='-U 1'
+                R2R = 'A' + R2R
         else:
                 option = '' 
 
         if self.UMI == 0:
             command = 'cutadapt -m 15 -O 5 -n 3 {option} -q 20 -b {R1} -B {R2} -o {trimed1} -p {trimed2} {file1} {file2}'\
-                    .format(R1=R1, R2=R2, option= option,
+                    .format(R1=R2R, R2=R1R, option= option,
                             trimed1=self.trimed1, trimed2=self.trimed2,
                             file1= self.fastq1, file2= self.fastq2)
         else:
             command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '.format(file1= self.fastq1, file2= self.fastq2, umi=self.UMI*'X')+\
                         '--barcodeCutOff=20 --outputprefix=- --prefix_split=0 -r read1 '+\
-                    '| cutadapt -m 15 -O 5 -n 3 {option} -q 20 -b {R1} -B {R2} --interleaved --quiet - '.format(option=option, R1=R1,R2=R2)+\
+                    '| cutadapt -m 15 -O 5 -n 3 {option} -q 20 -b {R1} -B {R2} --interleaved --quiet - '.format(option=option, R1=R2R,R2=R1R)+\
                     '| deinterleave_fastq.py - {trimed1} {trimed2} '.format(trimed1=self.trimed1, trimed2=self.trimed2)
         self.run_process(command)
 

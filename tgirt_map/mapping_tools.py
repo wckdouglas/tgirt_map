@@ -142,7 +142,7 @@ class sample_object():
 
     def bowtie_map(self):
         # map reads
-        command = 'bowtie2--mm  --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 -p {threads} -k 10 '.format(threads=self.threads)+\
+        command = 'bowtie2 --mm  --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 -p {threads} -k 10 '.format(threads=self.threads)+\
                 '--no-mixed --no-discordant -x {index} -1 {fq_path}/unmapped.1.fq.gz -2 {fq_path}/unmapped.2.fq.gz'\
                         .format(index=self.bowtie2_index, fq_path = self.bowtie_out) +\
                 '| samtools view -@{threads} -bS - > {bowtie_out}/bowtie2.bam'.format(threads=self.threads, bowtie_out=self.bowtie_out)

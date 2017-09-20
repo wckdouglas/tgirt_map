@@ -88,7 +88,7 @@ def main():
     if not args.skip_post_process_bam:
         process_sample.combined_aligned()
 
-        if args.umi > 0:
+        if args.umi > 0 and not args.count_all:
             process_sample.dedup_bam()
 
         process_sample.combined_filter()

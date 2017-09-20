@@ -44,6 +44,8 @@ def getopt():
               help = 'used TTN primer')
     parser.add_argument('--umi', default=0, type=int,
               help = "Number of UMI bases from 5' of R1 (default = 0)")
+    parser.add_argument('--count_all', action='store_true',
+              help = "Ignore UMI for counting, only evaluated with --umi option")
     parser.add_argument('--dry', action='store_true', help = "Dry run")
     parser.add_argument('--skip_trim', action='store_true',  
               help = 'DEBUG: skip trimming')

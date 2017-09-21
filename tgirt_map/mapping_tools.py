@@ -54,7 +54,7 @@ class sample_object():
         self.rRNA_fastq1 = '%s/rRNA.1.fq' %self.rRNA_tRNA_out
         self.rRNA_fastq2 = '%s/rRNA.2.fq' %self.rRNA_tRNA_out
 
-        if self.UMI == 0 and not self.count_all:
+        if self.UMI == 0 or self.count_all:
                 self.count_bam = self.combined_out + '/primary.bam'
         else:
                 self.count_bam = self.combined_out + '/primary.dedup.bam'

@@ -25,6 +25,10 @@ class sample_object():
         self.dry = args.dry
         self.count_all = args.count_all
 
+        self.single_end = not self.fastq2
+        if self.single_end and self.UMI > 0:
+            sys.exit('Cant do UMI for single end!!!')
+
         #### make folder
         self.trim_folder = self.outpath + '/Trim'
         self.count_folder= self.outpath + '/Counts'
@@ -78,10 +82,16 @@ class sample_object():
                 option = '' 
 
         if self.UMI == 0:
-            command = 'cutadapt -m 15 -O 5 -n 3 {option} -q 20 -b {R1} -B {R2} -o {trimed1} -p {trimed2} {file1} {file2}'\
-                    .format(R1=R2R, R2=R1R, option= option,
-                            trimed1=self.trimed1, trimed2=self.trimed2,
-                            file1= self.fastq1, file2= self.fastq2)
+            if not self.single_end:
+                command = 'cutadapt -m 15 -O 5 -n 3 {option} -q 20 -b {R1} -B {R2} -o {trimed1} -p {trimed2} {file1} {file2}'\
+                        .format(R1=R2R, R2=R1R, option= option,
+                                trimed1=self.trimed1, trimed2=self.trimed2,
+                                file1= self.fastq1, file2= self.fastq2)
+            else:
+                command = 'cutadapt -m 15 -O 5 -n 3 {option} -q 20 -b {R1} -o {trimed1} {file1}'\
+                        .format(R1=R2R, option= option,
+                                trimed1=self.trimed1,
+                                file1= self.fastq1)
         else:
             command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '.format(file1= self.fastq1, file2= self.fastq2, umi=self.UMI*'X')+\
                         '--barcodeCutOff=20 --outputprefix=- --prefix_split=0 -r read1 '+\
@@ -90,10 +100,27 @@ class sample_object():
         self.run_process(command)
 
     def premap_tRNA_rRNA(self):
-        command = 'bowtie2 -p {threads} -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
+        '''
+        premapping to tRNA and rRNA and make fastq files
+        '''
+        if not self.single_end:
+            # paired end commands
+            _input = '-1 {trimed1} -2 {trimed2} '.format(trimed1=self.trimed1, trimed2=self.trimed2) 
+            rRNA_extract = '| bamToFastq -fq {rRNA_FASTQ1} -fq2 {rRNA_FASTQ2} -i -'.format(rRNA_FASTQ1=self.rRNA_fastq1, rRNA_FASTQ2=self.rRNA_fastq2)
+            tRNA_extract = '| bamToFastq -fq {TRNA_FASTQ1} -fq2 {TRNA_FASTQ2} -i -'.format(TRNA_FASTQ1=self.tRNA_fastq1, TRNA_FASTQ2=self.tRNA_fastq2)
+            unmap_extract = '| bamToFastq -fq {PREMAP_FASTQ1} -fq2 {PREMAP_FASTQ2} -i - '.format(PREMAP_FASTQ1=self.premap_fastq1,
+                                                                                    PREMAP_FASTQ2=self.premap_fastq2)
+        else:
+            # single end commands
+            _input = '-U {trimed1} '.format(trimed1=self.trimed1) 
+            rRNA_extract = '| bamToFastq -fq {rRNA_FASTQ1} -i -'.format(rRNA_FASTQ1=self.rRNA_fastq1)
+            tRNA_extract = '| bamToFastq -fq {TRNA_FASTQ1} -i -'.format(TRNA_FASTQ1=self.tRNA_fastq1)
+            unmap_extract = '| bamToFastq -fq {PREMAP_FASTQ1} -i - '.format(PREMAP_FASTQ1=self.premap_fastq1)
+
+        command =  'bowtie2 -p {threads} -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
                 '--no-mixed --norc --no-discordant ' +\
-                '-x {tRNA_rRNA_index} -1 {trimed1} -2 {trimed2} '.format(tRNA_rRNA_index = self.rRNA_tRNA_index,
-                                                                        trimed1=self.trimed1, trimed2=self.trimed2) +\
+                '-x {tRNA_rRNA_index} '.format(tRNA_rRNA_index = self.rRNA_tRNA_index) +\
+                _input + \
                 '| samtools view -bS@{threads} - '.format(threads=self.threads)+\
                 '> {rRNA_tRNA_out}/tRNA_rRNA.bam'.format(rRNA_tRNA_out = self.rRNA_tRNA_out)
         self.run_process(command)
@@ -101,65 +128,88 @@ class sample_object():
 
         ##extract tr/RNA reads
         command = 'samtools view -h -F4 {rRNA_tRNA_out}/tRNA_rRNA.bam '.format(rRNA_tRNA_out=self.rRNA_tRNA_out)+\
-                "| awk '$1~\"^@\" || $2 == 83 || $2 == 163 || $2 == 99 || $2 == 147'" +\
+                "| awk '$1~\"^@\" || $2 ~/^(83|163|99|147|0|16)$/'" +\
                 "| awk '$1~\"^@\" || $3~/gi\||rRNA/'" +\
                 '| samtools view -b '+\
-                '| bamToFastq -fq {rRNA_FASTQ1} -fq2 {rRNA_FASTQ2} -i -'.format(rRNA_FASTQ1=self.rRNA_fastq1, rRNA_FASTQ2=self.rRNA_fastq2)
+                rRNA_extract
         self.run_process(command)
 
         command = 'samtools view -h -F4 {rRNA_tRNA_out}/tRNA_rRNA.bam '.format(rRNA_tRNA_out=self.rRNA_tRNA_out)+\
-                "| awk '$1~\"^@\" || $2 == 83 || $2 == 163 || $2 == 99 || $2 == 147'" +\
+                "| awk '$1~\"^@\" || $2 ~/^(83|163|99|147|0|16)$/'" +\
                 "| awk '$1~\"^@\" || $3!~/gi\||rRNA/'" +\
                 '| samtools view -b '+\
-                '| bamToFastq -fq {TRNA_FASTQ1} -fq2 {TRNA_FASTQ2} -i -'.format(TRNA_FASTQ1=self.tRNA_fastq1, TRNA_FASTQ2=self.tRNA_fastq2)
+                tRNA_extract
         self.run_process(command)
 
         ##extract non tRNA/rRNA reads
         command = 'samtools view -bf4 {rRNA_tRNA_out}/tRNA_rRNA.bam'.format(rRNA_tRNA_out=self.rRNA_tRNA_out)+\
-                '| bamToFastq -fq {PREMAP_FASTQ1} -fq2 {PREMAP_FASTQ2} -i - '.format(PREMAP_FASTQ1=self.premap_fastq1,
-                                                                                    PREMAP_FASTQ2=self.premap_fastq2)
+                unmap_extract
         self.run_process(command)
 
+
     def hisat_map(self):
+        if not self.single_end:
+            _input = '-1 {PREMAP_FASTQ1} -2 {PREMAP_FASTQ2} '.format(PREMAP_FASTQ1=self.premap_fastq1, PREMAP_FASTQ2=self.premap_fastq2) +
+            _split_option = ' '
+            _unaligned = '| bamToFastq -i - -fq {bowtie_out}/unmapped.1.fq -fq2 {bowtie_out}/unmapped.2.fq'.format(bowtie_out=self.bowtie_out)
+            _zip_command = 'gzip -f {bowtie_out}/unmapped.1.fq;gzip -f {bowtie_out}/unmapped.2.fq'.format(bowtie_out=self.bowtie_out)
+
+        else:
+            _input = '-U {PREMAP_FASTQ1} '.format(PREMAP_FASTQ1=self.premap_fastq1) 
+            _split_option = ' --single_end'
+            _unaligned = '| bamToFastq -i - -fq {bowtie_out}/unmapped.1.fq '.format(bowtie_out=self.bowtie_out)
+            _zip_command = 'gzip -f {bowtie_out}/unmapped.1.fq'.format(bowtie_out=self.bowtie_out)
+
+
         # map reads
         command = 'hisat2 -p {threads} -k 10 --no-mixed --no-discordant '.format(threads=self.threads)+\
                 '--known-splicesite-infile {Splicesite} '.format(Splicesite=self.splicesite) +\
-                '--novel-splicesite-outfile {hisat_out}/novelsite.txt -x {ref} -1 {PREMAP_FASTQ1} -2 {PREMAP_FASTQ2} '\
-                     .format(hisat_out=self.hisat_out, ref=self.hisat_index, PREMAP_FASTQ1=self.premap_fastq1, PREMAP_FASTQ2=self.premap_fastq2) +\
+                '--novel-splicesite-outfile {hisat_out}/novelsite.txt -x {ref} '.format(hisat_out=self.hisat_out, ref=self.hisat_index)+\
+                _input + \
                 '| samtools view -bS - > {hisat_out}/hisat.bam'.format(hisat_out=self.hisat_out)
         self.run_process(command)
 
         #split to uniq and multimap
-        command = 'split_uniq_bam.py -i {hisat_out}/hisat.bam -o {hisat_out}/hisat -a hisat2'.format(hisat_out=self.hisat_out)
-        self.run_process(command)
+        uniq_command = 'split_uniq_bam.py -i {hisat_out}/hisat.bam -o {hisat_out}/hisat -a hisat2 {option}'.format(hisat_out=self.hisat_out, option=_split_option)
+        self.run_process(uniq_command)
 
         #extract unaligned
         command = 'samtools view -@ {threads} -bf4 {hisat_out}/hisat.bam'.format(threads=self.threads, hisat_out=self.hisat_out) + \
-                        '| bamToFastq -i - -fq {bowtie_out}/unmapped.1.fq -fq2 {bowtie_out}/unmapped.2.fq'.format(bowtie_out=self.bowtie_out)
+                _unaligned
         self.run_process(command)
-        command = 'gzip -f {bowtie_out}/unmapped.1.fq;gzip -f {bowtie_out}/unmapped.2.fq'.format(bowtie_out=self.bowtie_out)
-        self.run_process(command)
+        self.run_process(_zip_command)
 
     def bowtie_map(self):
+
+        if not self.single_end:
+            _input = '-1 {fq_path}/unmapped.1.fq.gz -2 {fq_path}/unmapped.2.fq.gz'.format(fq_path = self.bowtie_out) +\
+            _split_option = ' '
+
+        else:
+            _input = '-U {fq_path}/unmapped.1.fq.gz '.format(fq_path = self.bowtie_out) +\
+            _split_option = ' --single_end'
+
+
         # map reads
         command = 'bowtie2 --mm  --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 -p {threads} -k 10 '.format(threads=self.threads)+\
-                '--no-mixed --no-discordant -x {index} -1 {fq_path}/unmapped.1.fq.gz -2 {fq_path}/unmapped.2.fq.gz'\
-                        .format(index=self.bowtie2_index, fq_path = self.bowtie_out) +\
+                '--no-mixed --no-discordant -x {index} '.format(index=self.bowtie2_index)+\
+                _input +\
                 '| samtools view -@{threads} -bS - > {bowtie_out}/bowtie2.bam'.format(threads=self.threads, bowtie_out=self.bowtie_out)
         self.run_process(command)
 
         # split to uniq and multimap
-        command = 'split_uniq_bam.py -i {bowtie_out}/bowtie2.bam -o {bowtie_out}/bowtie -a bowtie2'.format(bowtie_out=self.bowtie_out)
+        command = 'split_uniq_bam.py -i {bowtie_out}/bowtie2.bam -o {bowtie_out}/bowtie -a bowtie2 {option}'.format(bowtie_out=self.bowtie_out, option=_split_option)
         self.run_process(command)
 
     def combined_aligned(self):
+        _multi_option = '--single_end' if self.single_end else ' '
         command = 'samtools cat %s/hisat.multi.bam %s/bowtie.multi.bam ' %(self.hisat_out, self.bowtie_out)+\
                 ' > %s/multi.bam' %(self.combined_out)
         self.run_process(command)
 
         command = 'reduce_multi_reads.py --infile {combined_out}/multi.bam --outfile {combined_out}/multi_filtered.bam '\
                                 .format(combined_out = self.combined_out) +\
-                        ' --bam_in --bam_out'
+                        ' --bam_in --bam_out {option}'.format(option=_multi_option)
         self.run_process(command)
 
         command ='samtools cat %s/multi_filtered.bam %s/hisat.unique.bam %s/bowtie.unique.bam' %(self.combined_out, self.hisat_out, self.bowtie_out) +\
@@ -195,6 +245,11 @@ class sample_object():
         self.run_process(dedup_command)
         self.run_process(resort_command)
 
+'''
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%  single end modified till here %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+'''
     def combined_filter(self):
 
         ### filter out tRNA

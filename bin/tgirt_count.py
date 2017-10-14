@@ -16,7 +16,7 @@ def getopt():
     parser.add_argument('-1', '--fastq1', 
               help = 'pairedEnd fastq file (read1)', required=True)
     parser.add_argument('-2', '--fastq2', 
-              help = 'pairedEnd fastq file (read2)', required=True)
+              help = 'pairedEnd fastq file (read2). Optional: only needed for paired-end', default=None)
     parser.add_argument('-o','--outdir', 
               help = 'result directory that all resulting/intermediate files will be stored\n' + \
                                          'will create 1. $resultpath/trimmed\n' + \

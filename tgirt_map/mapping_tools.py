@@ -149,7 +149,7 @@ class sample_object():
 
     def hisat_map(self):
         if not self.single_end:
-            _input = '-1 {PREMAP_FASTQ1} -2 {PREMAP_FASTQ2} '.format(PREMAP_FASTQ1=self.premap_fastq1, PREMAP_FASTQ2=self.premap_fastq2) +
+            _input = '-1 {PREMAP_FASTQ1} -2 {PREMAP_FASTQ2} '.format(PREMAP_FASTQ1=self.premap_fastq1, PREMAP_FASTQ2=self.premap_fastq2) 
             _split_option = ' '
             _unaligned = '| bamToFastq -i - -fq {bowtie_out}/unmapped.1.fq -fq2 {bowtie_out}/unmapped.2.fq'.format(bowtie_out=self.bowtie_out)
             _zip_command = 'gzip -f {bowtie_out}/unmapped.1.fq;gzip -f {bowtie_out}/unmapped.2.fq'.format(bowtie_out=self.bowtie_out)
@@ -182,11 +182,11 @@ class sample_object():
     def bowtie_map(self):
 
         if not self.single_end:
-            _input = '-1 {fq_path}/unmapped.1.fq.gz -2 {fq_path}/unmapped.2.fq.gz'.format(fq_path = self.bowtie_out) +\
+            _input = '-1 {fq_path}/unmapped.1.fq.gz -2 {fq_path}/unmapped.2.fq.gz'.format(fq_path = self.bowtie_out) 
             _split_option = ' '
 
         else:
-            _input = '-U {fq_path}/unmapped.1.fq.gz '.format(fq_path = self.bowtie_out) +\
+            _input = '-U {fq_path}/unmapped.1.fq.gz '.format(fq_path = self.bowtie_out) 
             _split_option = ' --single_end'
 
 
@@ -245,75 +245,101 @@ class sample_object():
         self.run_process(dedup_command)
         self.run_process(resort_command)
 
-'''
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%  single end modified till here %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-'''
     def combined_filter(self):
 
+        if not self.single_end:
+            _verb = 'pairtobed'
+            _option = '-type neither'
+
+        else:
+            _verb = 'intersect'
+            _option = '-v'
+
         ### filter out tRNA
-        command = 'bedtools pairtobed -s -f 0.01 -abam {combined_path}/primary.bam -b {bed_path}/tRNA.bed > {tRNA_path}/tRNA_primary.bam' \
-                        .format(combined_path = self.combined_out, bed_path = self.bedpath, tRNA_path=self.tRNA_out)
+        command = 'bedtools {verb} -s -f 0.01 -abam {combined_path}/primary.bam -b {bed_path}/tRNA.bed > {tRNA_path}/tRNA_primary.bam' \
+                        .format(combined_path = self.combined_out, bed_path = self.bedpath, tRNA_path=self.tRNA_out, verb = _verb)
         self.run_process(command)
 
         ### filter out rRNA
-        command = 'bedtools pairtobed -s -f 0.01 -abam {combined_path}/primary.bam -b {bed_path}/rRNA_for_bam_filter.bed > {rRNA_path}/rRNA_primary.bam' \
-                        .format(combined_path = self.combined_out, bed_path = self.bedpath, rRNA_path=self.rRNA_out)
+        command = 'bedtools {verb} -s -f 0.01 -abam {combined_path}/primary.bam -b {bed_path}/rRNA_for_bam_filter.bed > {rRNA_path}/rRNA_primary.bam' \
+                        .format(combined_path = self.combined_out, bed_path = self.bedpath, rRNA_path=self.rRNA_out, verb = _verb)
         self.run_process(command)
 
         ### filter out tRNA
-        command = 'bedtools pairtobed -s -f 0.01 -abam {count_bam} -b {bed_path}/sncRNA_no_tRNA.bed > {combined_path}/sncRNA.bam' \
-                        .format(count_bam = self.count_bam, bed_path = self.bedpath, combined_path = self.combined_out)
+        command = 'bedtools {verb} -s -f 0.01 -abam {count_bam} -b {bed_path}/sncRNA_no_tRNA.bed > {combined_path}/sncRNA.bam' \
+                        .format(count_bam = self.count_bam, bed_path = self.bedpath, combined_path = self.combined_out, verb = _verb)
         self.run_process(command)
 
         ### filter out long RNA
-        command = 'bedtools pairtobed -s -f 0.01 -type neither -abam {count_bam} -b {bed_path}/sncRNA_rRNA_for_bam_filter.bed > {combined_path}/primary_no_sncRNA_tRNA_rRNA.bam' \
-                        .format(count_bam = self.count_bam, bed_path = self.bedpath, combined_path = self.combined_out)
+        command = 'bedtools {verb} -s -f 0.01 {option} -abam {count_bam} -b {bed_path}/sncRNA_rRNA_for_bam_filter.bed > {combined_path}/primary_no_sncRNA_tRNA_rRNA.bam' \
+                        .format(count_bam = self.count_bam, bed_path = self.bedpath, combined_path = self.combined_out, option=_option, verb = _verb)
         self.run_process(command)
 
 
     def make_alignment_bed(self):
-        command = 'bam_to_bed.py -i {combined_out}/sncRNA.bam -o {combined_out}/sncRNA.bed -m 5 -M 1000000'.format(combined_out=self.combined_out)
-        self.run_process(command)
 
-        command = 'bam_to_bed.py -i {combined_out}/primary_no_sncRNA_tRNA_rRNA.bam  -o {combined_out}/primary_no_sRNAs.bed -m 5 -M 1000000'.format(combined_out=self.combined_out)
-        self.run_process(command)
+        if not self.single_end:
+            command = 'bam_to_bed.py -m 5 -M 1000000  -i {combined_out}/sncRNA.bam > {combined_out}/sncRNA.bed'.format(combined_out=self.combined_out)
+            self.run_process(command)
+
+            command = 'bam_to_bed.py -i {combined_out}/primary_no_sncRNA_tRNA_rRNA.bam  -m 5 -M 1000000 > {combined_out}/primary_no_sRNAs.bed'.format(combined_out=self.combined_out)
+            self.run_process(command)
+        else:
+            command = 'bedtools bamtobed  -i {combined_out}/sncRNA.bam > {combined_out}/sncRNA.bed'.format(combined_out=self.combined_out)
+            self.run_process(command)
+
+            command = 'bedtools bamtobed -i {combined_out}/primary_no_sncRNA_tRNA_rRNA.bam  -m 5 -M 1000000 > {combined_out}/primary_no_sRNAs.bed'.format(combined_out=self.combined_out)
+            self.run_process(command)
+
 
     def generate_tRNA_remap(self):
         # tRNA reads process
-        command = 'bamToFastq -i {tRNA_path}/tRNA_primary.bam -fq {tRNA_path}/tRNA.1.fq -fq2 {tRNA_path}/tRNA.2.fq'.format(tRNA_path =self.tRNA_out)
-        self.run_process(command)
-        command = 'cat {tRNA_fastq1} {tRNA_path}/tRNA.1.fq | gzip > {tRNA_path}/tRNA.1.fq.gz'.format(tRNA_fastq1=self.tRNA_fastq1, tRNA_path=self.tRNA_out)
-        self.run_process(command)
-        command = 'cat {tRNA_fastq2} {tRNA_path}/tRNA.2.fq | gzip > {tRNA_path}/tRNA.2.fq.gz'.format(tRNA_fastq2=self.tRNA_fastq2, tRNA_path=self.tRNA_out)
-        self.run_process(command)
+        if not self.single_end:
+            command = 'bamToFastq -i {tRNA_path}/tRNA_primary.bam -fq {tRNA_path}/tRNA.1.fq -fq2 {tRNA_path}/tRNA.2.fq'.format(tRNA_path =self.tRNA_out)
+            self.run_process(command)
+            command = 'cat {tRNA_fastq1} {tRNA_path}/tRNA.1.fq | gzip > {tRNA_path}/tRNA.1.fq.gz'.format(tRNA_fastq1=self.tRNA_fastq1, tRNA_path=self.tRNA_out)
+            self.run_process(command)
+            command = 'cat {tRNA_fastq2} {tRNA_path}/tRNA.2.fq | gzip > {tRNA_path}/tRNA.2.fq.gz'.format(tRNA_fastq2=self.tRNA_fastq2, tRNA_path=self.tRNA_out)
+            self.run_process(command)
+
+            _input = '-1 {tRNA_path}/tRNA.1.fq.gz -2 {tRNA_path}/tRNA.2.fq.gz '.format(tRNA_path=self.tRNA_out)
+
+        else:
+            command = 'bamToFastq -i {tRNA_path}/tRNA_primary.bam -fq {tRNA_path}/tRNA.1.fq'.format(tRNA_path =self.tRNA_out)
+            self.run_process(command)
+            command = 'cat {tRNA_fastq1} {tRNA_path}/tRNA.1.fq | gzip > {tRNA_path}/tRNA.1.fq.gz'.format(tRNA_fastq1=self.tRNA_fastq1, tRNA_path=self.tRNA_out)
+            self.run_process(command)
+
+            _input = '-U {tRNA_path}/tRNA.1.fq.gz'.format(tRNA_path=self.tRNA_out)
 
         command = 'bowtie2 -p {threads} --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
                         '--norc --no-mixed --no-discordant -x {tRNA_index} '.format(tRNA_index=self.tRNA_index)+\
-                        '-1 {tRNA_path}/tRNA.1.fq.gz -2 {tRNA_path}/tRNA.2.fq.gz '.format(tRNA_path=self.tRNA_out)+\
+                        _input +\
                         '| samtools view -bS@ {threads} - > {tRNA_path}/tRNA_remap.bam'.format(tRNA_path=self.tRNA_out, threads=self.threads)
         self.run_process(command)
 
         if self.UMI > 0 and not self.count_all:
-                command = ' bam_umi_tag.py --in_bam %s/tRNA_remap.bam --out_bam - --tag RX ' %(self.tRNA_out)+\
-                        '| picard SortSam I=/dev/stdin O=/dev/stdout SORT_ORDER=queryname '+\
-                        '| picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true INPUT=/dev/stdin OUTPUT=/dev/stdout ' +\
-                        '| samtools sort -@ {threads} -T {tRNA_path}/tRNA -O bam > {tRNA_path}/tRNA_remap.sort.bam'.format(threads=self.threads, tRNA_path=self.tRNA_out)
-                self.run_process(command)
-                command = 'samtools index {tRNA_path}/tRNA_remap.sort.bam'.format(tRNA_path=self.tRNA_out) 
-                self.run_process(command)
-                dedup_command = 'picard UmiAwareMarkDuplicatesWithMateCigar UMI_METRICS_FILE=%s/tRNA.umi_metric ' %(self.tRNA_out)+\
-                                'MAX_EDIT_DISTANCE_TO_JOIN=1 TAG_DUPLICATE_SET_MEMBERS=true ' +\
-                                'UMI_TAG_NAME=RX INPUT={tRNA_path}/tRNA_remap.sort.bam OUTPUT=/dev/stdout '.format(tRNA_path=self.tRNA_out) +\
-                                'METRICS_FILE=%s/tRNA.duplicate_metrics REMOVE_DUPLICATES=false ASSUME_SORT_ORDER=coordinate ' %(self.tRNA_out)   +\
-                                '| samtools sort -n@ {threads} -T {tRNA_path}/tRNA -O bam - > {tRNA_path}/tRNA_remap.dedup.bam'.format(threads=self.threads, tRNA_path=self.tRNA_out) 
-                self.run_process(dedup_command)
-                command = 'cat {tRNA_path}/tRNA_remap.dedup.bam | bam_to_bed.py -i - -o {tRNA_path}/tRNA.bed -m 5 -M 10000'.format(tRNA_path=self.tRNA_out)
-                self.run_process(command)
+            command = ' bam_umi_tag.py --in_bam %s/tRNA_remap.bam --out_bam - --tag RX ' %(self.tRNA_out)+\
+                    '| picard SortSam I=/dev/stdin O=/dev/stdout SORT_ORDER=queryname '+\
+                    '| picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true INPUT=/dev/stdin OUTPUT=/dev/stdout ' +\
+                    '| samtools sort -@ {threads} -T {tRNA_path}/tRNA -O bam > {tRNA_path}/tRNA_remap.sort.bam'.format(threads=self.threads, tRNA_path=self.tRNA_out)
+            self.run_process(command)
+            command = 'samtools index {tRNA_path}/tRNA_remap.sort.bam'.format(tRNA_path=self.tRNA_out) 
+            self.run_process(command)
+            dedup_command = 'picard UmiAwareMarkDuplicatesWithMateCigar UMI_METRICS_FILE=%s/tRNA.umi_metric ' %(self.tRNA_out)+\
+                            'MAX_EDIT_DISTANCE_TO_JOIN=1 TAG_DUPLICATE_SET_MEMBERS=true ' +\
+                            'UMI_TAG_NAME=RX INPUT={tRNA_path}/tRNA_remap.sort.bam OUTPUT=/dev/stdout '.format(tRNA_path=self.tRNA_out) +\
+                            'METRICS_FILE=%s/tRNA.duplicate_metrics REMOVE_DUPLICATES=false ASSUME_SORT_ORDER=coordinate ' %(self.tRNA_out)   +\
+                            '| samtools sort -n@ {threads} -T {tRNA_path}/tRNA -O bam - > {tRNA_path}/tRNA_remap.dedup.bam'.format(threads=self.threads, tRNA_path=self.tRNA_out) 
+            self.run_process(dedup_command)
+            command = 'cat {tRNA_path}/tRNA_remap.dedup.bam | bam_to_bed.py -i - -o {tRNA_path}/tRNA.bed -m 5 -M 10000'.format(tRNA_path=self.tRNA_out)
+            self.run_process(command)
         else:
+            if not self.single_end:
                 command = 'bam_to_bed.py -i {tRNA_path}/tRNA_remap.bam  -o {tRNA_path}/tRNA.bed -m 5 -M 10000'.format(tRNA_path=self.tRNA_out)
-                self.run_process(command)
+            else:
+                command = 'bedtools bamtobed -i {tRNA_path}/tRNA_remap.bam  > {tRNA_path}/tRNA.bed'.format(tRNA_path=self.tRNA_out)
+            self.run_process(command)
 
     def generate_tRNA_count(self):
         tRNA_count = defaultdict(int)
@@ -332,38 +358,53 @@ class sample_object():
         print >> sys.stderr, 'Written %s' %tRNA_count_file
 
     def generate_rRNA_count(self):
-        command = 'bamToFastq -fq {rRna_path}/rRNA.1.fq -fq2 {rRna_path}/rRNA.2.fq -i {rRna_path}/rRNA_primary.bam'.format(rRna_path=self.rRNA_out)
-        self.run_process(command)
-        command = 'cat {rRNA_fastq1} {rRNA_path}/rRNA.1.fq | gzip > {rRNA_path}/rRNA.1.fq.gz'.format(rRNA_fastq1=self.rRNA_fastq1, rRNA_path=self.rRNA_out)
-        self.run_process(command)
-        command = 'cat {rRNA_fastq2} {rRNA_path}/rRNA.2.fq | gzip > {rRNA_path}/rRNA.2.fq.gz'.format(rRNA_fastq2=self.rRNA_fastq2, rRNA_path=self.rRNA_out)
-        self.run_process(command)
+
+        if not self.single_end:
+            command = 'bamToFastq -fq {rRna_path}/rRNA.1.fq -fq2 {rRna_path}/rRNA.2.fq -i {rRna_path}/rRNA_primary.bam'.format(rRna_path=self.rRNA_out)
+            self.run_process(command)
+            command = 'cat {rRNA_fastq1} {rRNA_path}/rRNA.1.fq | gzip > {rRNA_path}/rRNA.1.fq.gz'.format(rRNA_fastq1=self.rRNA_fastq1, rRNA_path=self.rRNA_out)
+            self.run_process(command)
+            command = 'cat {rRNA_fastq2} {rRNA_path}/rRNA.2.fq | gzip > {rRNA_path}/rRNA.2.fq.gz'.format(rRNA_fastq2=self.rRNA_fastq2, rRNA_path=self.rRNA_out)
+            self.run_process(command)
+
+            _input = '-1 {rRNA_path}/rRNA.1.fq.gz -2 {rRNA_path}/rRNA.2.fq.gz '.format(rRNA_path=self.rRNA_out)
+        else:
+            command = 'bamToFastq -fq {rRna_path}/rRNA.1.fq  -i {rRna_path}/rRNA_primary.bam'.format(rRna_path=self.rRNA_out)
+            self.run_process(command)
+            command = 'cat {rRNA_fastq1} {rRNA_path}/rRNA.1.fq | gzip > {rRNA_path}/rRNA.1.fq.gz'.format(rRNA_fastq1=self.rRNA_fastq1, rRNA_path=self.rRNA_out)
+            self.run_process(command)
+
+            _input = '-U {rRNA_path}/rRNA.1.fq.gz'.format(rRNA_path=self.rRNA_out)
 
         command = 'bowtie2 -p {threads} -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
                 '--no-mixed --no-discordant -x {rRNA_index} '.format(rRNA_index=self.rRNA_index) +\
-                '-1 {rRNA_path}/rRNA.1.fq.gz -2 {rRNA_path}/rRNA.2.fq.gz '.format(rRNA_path=self.rRNA_out)+\
+                _input +\
                 '| samtools view -bS@ {threads} - > {rRNA_path}/rRNA_remap.bam'.format(rRNA_path=self.rRNA_out, threads=self.threads)
         self.run_process(command)
 
         if self.UMI > 0 and not self.count_all:
-                command = ' bam_umi_tag.py --in_bam %s/rRNA_remap.bam --out_bam - --tag RX ' %(self.rRNA_out)+\
-                        '| picard SortSam I=/dev/stdin O=/dev/stdout SORT_ORDER=queryname '+\
-                        '| picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true INPUT=/dev/stdin OUTPUT=/dev/stdout'+\
-                        '| samtools sort -@ {threads} -T {rRNA_path}/rRNA -O bam > {rRNA_path}/rRNA_remap.sort.bam'.format(threads=self.threads, rRNA_path=self.rRNA_out)
-                self.run_process(command)
-                command = 'samtools index {rRNA_path}/rRNA_remap.sort.bam'.format(rRNA_path=self.rRNA_out) 
-                self.run_process(command)
-                dedup_command = 'picard UmiAwareMarkDuplicatesWithMateCigar UMI_METRICS_FILE=%s/rRNA.umi_metric ' %(self.rRNA_out)+\
-                                'MAX_EDIT_DISTANCE_TO_JOIN=1 TAG_DUPLICATE_SET_MEMBERS=true' +\
-                                'UMI_TAG_NAME=RX INPUT={rRNA_path}/rRNA_remap.sort.bam OUTPUT=/dev/stdout '.format(rRNA_path=self.rRNA_out) +\
-                                'METRICS_FILE=%s/rRNA.duplicate_metrics REMOVE_DUPLICATES=false ASSUME_SORT_ORDER=coordinate' %(self.rRNA_out)   +\
-                                '| samtools sort -n@ {threads} -T {rRNA_path}/rRNA -O bam - > {rRNA_path}/rRNA_remap.dedup.bam'.format(threads=self.threads, rRNA_path=self.rRNA_out) 
-                self.run_process(dedup_command)
-                command = 'cat {rRNA_path}/rRNA_remap.dedup.bam | bam_to_bed.py -i - -o {rRNA_path}/rRNA.bed -m 5 -M 10000'.format(rRNA_path=self.rRNA_out)
-                self.run_process(command)
+            command = ' bam_umi_tag.py --in_bam %s/rRNA_remap.bam --out_bam - --tag RX ' %(self.rRNA_out)+\
+                    '| picard SortSam I=/dev/stdin O=/dev/stdout SORT_ORDER=queryname '+\
+                    '| picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true INPUT=/dev/stdin OUTPUT=/dev/stdout'+\
+                    '| samtools sort -@ {threads} -T {rRNA_path}/rRNA -O bam > {rRNA_path}/rRNA_remap.sort.bam'.format(threads=self.threads, rRNA_path=self.rRNA_out)
+            self.run_process(command)
+            command = 'samtools index {rRNA_path}/rRNA_remap.sort.bam'.format(rRNA_path=self.rRNA_out) 
+            self.run_process(command)
+            dedup_command = 'picard UmiAwareMarkDuplicatesWithMateCigar UMI_METRICS_FILE=%s/rRNA.umi_metric ' %(self.rRNA_out)+\
+                            'MAX_EDIT_DISTANCE_TO_JOIN=1 TAG_DUPLICATE_SET_MEMBERS=true' +\
+                            'UMI_TAG_NAME=RX INPUT={rRNA_path}/rRNA_remap.sort.bam OUTPUT=/dev/stdout '.format(rRNA_path=self.rRNA_out) +\
+                            'METRICS_FILE=%s/rRNA.duplicate_metrics REMOVE_DUPLICATES=false ASSUME_SORT_ORDER=coordinate' %(self.rRNA_out)   +\
+                            '| samtools sort -n@ {threads} -T {rRNA_path}/rRNA -O bam - > {rRNA_path}/rRNA_remap.dedup.bam'.format(threads=self.threads, rRNA_path=self.rRNA_out) 
+            self.run_process(dedup_command)
+            command = 'cat {rRNA_path}/rRNA_remap.dedup.bam | bam_to_bed.py -i - -o {rRNA_path}/rRNA.bed -m 5 -M 10000'.format(rRNA_path=self.rRNA_out)
+            self.run_process(command)
         else:
+            if not self.single_end:
                 command = 'bam_to_bed.py -i {rRNA_path}/rRNA_remap.bam  -o {rRNA_path}/rRNA.bed -m 5 -M 10000'.format(rRNA_path=self.rRNA_out)
-                self.run_process(command)
+            else:
+                command = 'bedtools bamtobed -i {rRNA_path}/rRNA_remap.bam  > {rRNA_path}/rRNA.bed'.format(rRNA_path=self.rRNA_out)
+            self.run_process(command)
+
 
 
         command = 'bedtools coverage -s -counts -F 0.1 -a {bed_path}/rRNA.bed -b {rRNA_path}/rRNA.bed > {rRNA_path}/rRNA.counts'.format(bed_path=self.bedpath, rRNA_path=self.rRNA_out)

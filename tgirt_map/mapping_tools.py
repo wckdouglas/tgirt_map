@@ -288,7 +288,7 @@ class sample_object():
             command = 'bedtools bamtobed  -i {combined_out}/sncRNA.bam > {combined_out}/sncRNA.bed'.format(combined_out=self.combined_out)
             self.run_process(command)
 
-            command = 'bedtools bamtobed -i {combined_out}/primary_no_sncRNA_tRNA_rRNA.bam  -m 5 -M 1000000 > {combined_out}/primary_no_sRNAs.bed'.format(combined_out=self.combined_out)
+            command = 'bedtools bamtobed -i {combined_out}/primary_no_sncRNA_tRNA_rRNA.bam  > {combined_out}/primary_no_sRNAs.bed'.format(combined_out=self.combined_out)
             self.run_process(command)
 
 

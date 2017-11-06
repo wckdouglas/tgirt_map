@@ -1,4 +1,5 @@
 from distutils.core import setup, Extension
+import glob
 
 setup(
     name='tgirt_map',
@@ -9,5 +10,5 @@ setup(
     author_email='wckdouglas@gmail.com',
     license='MIT',
     packages=['tgirt_map'],
-    scripts = ['bin/tgirt_count.py']
+    scripts = glob.glob('bin/*.py')
 )

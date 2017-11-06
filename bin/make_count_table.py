@@ -62,7 +62,7 @@ def readSample(count_file_path, tRNA_count_path, sample_id):
 
 def main():
     if len(sys.argv) != 2:
-        sys.exit('[usage] python %s <count_file_path>')
+        sys.exit('[usage] python %s <count_file_path>' %(sys.argv[0]))
     count_file_path = sys.argv[1] 
     count_files = glob.glob(count_file_path + '/Counts/RAW/*counts')
     sample_ids = set(map(lambda x: x.split('/')[-1].split('.')[0], count_files))

@@ -63,9 +63,10 @@ def readSample(count_file_path, tRNA_count_path, sample_id):
 def main():
     if len(sys.argv) != 2:
         sys.exit('[usage] python %s <count_file_path>' %(sys.argv[0]))
-    count_file_path = sys.argv[1] 
-    tRNA_count_path = count_file_path + '/Counts/tRNA'
-    count_files = glob.glob(count_file_path + '/Counts/RAW/*counts')
+    project_path = sys.argv[1] 
+    count_file_path = project_path + '/Counts/RAW'
+    tRNA_count_path = project_path + '/Counts/tRNA_RAW'
+    count_files = glob.glob(count_file_path + '/*counts')
     sample_ids = set(map(lambda x: x.split('/')[-1].split('.')[0], count_files))
     dfFunc = partial(readSample, count_file_path, tRNA_count_path)
     dfs = Pool(12).map(dfFunc, sample_ids)
@@ -78,7 +79,7 @@ def main():
         .reset_index() \
         .pipe(lambda d: d[~d.type.str.contains('ERCC')])
     df.iloc[:,3:] = df.iloc[:,3:].astype(int)
-    tablename = count_file_path + '/Counts/combined_gene_count.tsv'
+    tablename = project_path + '/Counts/combined_gene_count.tsv'
     df.to_csv(tablename, sep='\t', index=False)
     print 'Written %s' %tablename
 

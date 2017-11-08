@@ -73,7 +73,7 @@ def main():
     df = pd.concat(dfs, axis=0) \
         .query('sample_name != "try"') \
         .assign(count = lambda d: d['count'].astype(int)) \
-        .pipe(pd.pivot_table,index = ['id','type','name'],  
+        .pipe(pd.pivot_table,index = ['id','grouped_type','type','name'],  
             values = 'count' , columns = ['sample_name'],
             fill_value=0) \
         .reset_index() \

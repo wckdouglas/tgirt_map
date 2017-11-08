@@ -57,7 +57,7 @@ def readSample(count_file_path, tRNA_count_path, sample_id):
     tRNA_df = read_tRNA(tRNA_count_path + '/' + sample_id + '.tRNA')
     df = pd.concat([df, tRNA_df],axis=0) \
         .assign(sample_name = sample_id.replace('-','_'))  \
-        .assign(type = lambda d: d.type.map(changeType))
+        .assign(grouped_type = lambda d: d.type.map(changeType))
     return df
 
 def main():

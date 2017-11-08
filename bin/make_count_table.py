@@ -78,7 +78,7 @@ def main():
             fill_value=0) \
         .reset_index() \
         .pipe(lambda d: d[~d.type.str.contains('ERCC')])
-    df.iloc[:,3:] = df.iloc[:,3:].astype(int)
+    df.iloc[:,4:] = df.iloc[:,4:].astype(int)
     tablename = project_path + '/Counts/combined_gene_count.tsv'
     df.to_csv(tablename, sep='\t', index=False)
     print 'Written %s' %tablename

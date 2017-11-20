@@ -8,35 +8,10 @@ import glob
 from functools import partial
 from multiprocessing import Pool
 import sys
+from tgirt_map.table_tool import change_gene_type
 
 
 
-ncRNA = ["sense_intronic","3prime_overlapping_ncRNA",'processed_transcript',
-        'sense_overlapping','Other_lncRNA', 'macro_lncRNA','non_coding','known_ncrna', 'LRG_gene',
-        'lincRNA','bidirectional_promoter_lncRNA', 'ribozyme','3prime_overlapping_ncrna']
-smncRNA = ['misc_RNA','snRNA','piRNA','scaRNA','sRNA','scRNA']
-large_rRNA = ['28S_rRNA','18S_rRNA']
-small_rRNA = ['rRNA','5S_rRNA','58S_rRNA','5.8S_rRNA']
-protein_coding = ['protein_coding','TR','IG']
-def changeType(x):
-    type = ''
-    if x in ncRNA or re.search('pseudo',x):
-        type = 'Other ncRNA'
-    elif re.search('TR|IG|protein',x):
-        type = 'Protein coding'
-    elif x.startswith('Mt_'):
-        type = 'Mt'
-    elif x == 'tRNA':
-        type = 'tRNA'
-    elif x in small_rRNA or x in large_rRNA:
-        type = 'rRNA'
-    elif x in smncRNA:
-        type = 'Other sncRNA'
-    elif x =='antisense':
-        type = 'Antisense'
-    else:
-        type = x
-    return type
 
 def readDF(count_file_name):
     df = pd.read_table(count_file_name, header=None)  \
@@ -57,7 +32,7 @@ def readSample(count_file_path, tRNA_count_path, sample_id):
     tRNA_df = read_tRNA(tRNA_count_path + '/' + sample_id + '.tRNA')
     df = pd.concat([df, tRNA_df],axis=0) \
         .assign(sample_name = sample_id.replace('-','_'))  \
-        .assign(grouped_type = lambda d: d.type.map(changeType))
+        .assign(grouped_type = lambda d: d.type.map(change_gene_type))
     return df
 
 def main():

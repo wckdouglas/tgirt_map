@@ -83,12 +83,12 @@ class sample_object():
 
         if self.UMI == 0:
             if not self.single_end:
-                command = 'cutadapt -m 15 -O 5 -n 3 {option} -q 20 -b {R1} -B {R2} -o {trimed1} -p {trimed2} {file1} {file2}'\
+                command = 'cutadapt -m 15 -O 5 -n 3 {option} --nextseq-trim=20 -q 20 -b {R1} -B {R2} -o {trimed1} -p {trimed2} {file1} {file2}'\
                         .format(R1=R2R, R2=R1R, option= option,
                                 trimed1=self.trimed1, trimed2=self.trimed2,
                                 file1= self.fastq1, file2= self.fastq2)
             else:
-                command = 'cutadapt -m 15 -O 5 -n 3 {option} -q 20 -b {R1} -o {trimed1} {file1}'\
+                command = 'cutadapt -m 15 -O 5 -n 3 {option} --nextseq-trim=20 -q 20 -b {R1} -o {trimed1} {file1}'\
                         .format(R1=R2R, option= option,
                                 trimed1=self.trimed1,
                                 file1= self.fastq1)

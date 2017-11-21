@@ -3,7 +3,6 @@
 import re
 
 
-
 ncRNA = ["sense_intronic","3prime_overlapping_ncRNA",'processed_transcript',
         'sense_overlapping','Other_lncRNA', 'macro_lncRNA','non_coding','known_ncrna', 'LRG_gene',
         'lincRNA','bidirectional_promoter_lncRNA', 'ribozyme','3prime_overlapping_ncrna']

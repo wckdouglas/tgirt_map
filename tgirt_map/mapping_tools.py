@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 import os
 import sys
 import time
@@ -345,7 +345,7 @@ class sample_object():
         tRNA_count = defaultdict(int)
         tRNA_bed = self.tRNA_out + '/tRNA.bed'
         tRNA_count_file = self.tRNA_raw + '/' + self.samplename + '.tRNA'
-        print >> sys.stderr, 'Reading from %s' %tRNA_bed
+        print('Reading from %s' %tRNA_bed, file=sys.stderr)
         if not self.dry:
             with open(tRNA_bed,'r') as bed:
                 for line in bed:
@@ -355,7 +355,7 @@ class sample_object():
             with open(tRNA_count_file, 'w') as count_file:
                 for key, value in tRNA_count.iteritems():
                     count_file.write('%s\t%i\n' %(key, value))
-        print >> sys.stderr, 'Written %s' %tRNA_count_file
+        print('Written %s' %tRNA_count_file, file=sys.stderr)
 
     def generate_rRNA_count(self):
 
@@ -423,7 +423,7 @@ class sample_object():
         self.run_process(command)
 
 def system_run(dry, samplename, command):
-    print >> sys.stderr, '[%s] Running: %s' %(samplename, command)
+    print('[%s] Running: %s' %(samplename, command), file=sys.stderr)
     if dry:
             return 0
 
@@ -431,7 +431,7 @@ def system_run(dry, samplename, command):
             start = time.time()
             os.system(command)
             end = time.time() - start
-            print >> sys.stderr, '[%s] Used time %.3f min' %(samplename, end/60)
+            print('[%s] Used time %.3f min' %(samplename, end/60), file=sys.stderr)
             return 0
 
 

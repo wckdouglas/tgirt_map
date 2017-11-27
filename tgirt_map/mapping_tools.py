@@ -213,7 +213,7 @@ class sample_object():
         self.run_process(command)
 
         command ='samtools cat %s/multi_filtered.bam %s/hisat.unique.bam %s/bowtie.unique.bam' %(self.combined_out, self.hisat_out, self.bowtie_out) +\
-                '| filterSoftClip.py -s 0.2 -b 0.5 -i - -o - '+\
+                '| filter_soft_clip.py -s 0.2 -b 0.5 -i - -o - '+\
                 '| samtools sort -n -@ %i -O bam -T %s/temp ' %(self.threads,self.combined_out) +\
                 '> %s/primary.bam' %(self.combined_out)
         self.run_process(command)

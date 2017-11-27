@@ -203,6 +203,7 @@ class sample_object():
 
     def combined_aligned(self):
         _multi_option = '--single_end' if self.single_end else ' '
+        _soft_clip_option = '--pe' if not self.single_end else ' '
         command = 'samtools cat %s/hisat.multi.bam %s/bowtie.multi.bam ' %(self.hisat_out, self.bowtie_out)+\
                 ' > %s/multi.bam' %(self.combined_out)
         self.run_process(command)
@@ -213,7 +214,7 @@ class sample_object():
         self.run_process(command)
 
         command ='samtools cat %s/multi_filtered.bam %s/hisat.unique.bam %s/bowtie.unique.bam' %(self.combined_out, self.hisat_out, self.bowtie_out) +\
-                '| filter_soft_clip.py -s 0.2 -b 0.5 -i - -o - '+\
+                '| filter_soft_clip.py -s 0.2 -b 0.5 -i - -o - %s' %_soft_clip_option + \
                 '| samtools sort -n -@ %i -O bam -T %s/temp ' %(self.threads,self.combined_out) +\
                 '> %s/primary.bam' %(self.combined_out)
         self.run_process(command)

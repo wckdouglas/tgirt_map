@@ -4,7 +4,7 @@
 # and extract tRNA reads for reassigning counts
 
 
-from __future__ import division
+from __future__ import division, print_function
 import time
 import glob
 import argparse
@@ -104,7 +104,7 @@ def main():
 
     end = time.time()
     usedTime = end - start
-    print >> sys.stderr, 'Finished: %s in %.3f hr ' %(process_sample.samplename ,usedTime/3600)
+    print('Finished: %s in %.3f hr ' %(process_sample.samplename ,usedTime/3600), file=sys.stderr)
     return 0
 
 if __name__ == '__main__':

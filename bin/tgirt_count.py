@@ -46,7 +46,11 @@ def getopt():
               help = "Number of UMI bases from 5' of R1 (default = 0)")
     parser.add_argument('--count_all', action='store_true',
               help = "Ignore UMI for counting, only evaluated with --umi option")
-    parser.add_argument('--dry', action='store_true', help = "Dry run")
+    parser.add_argument('--repeats', default=None,
+              help = "Repeat mask BED file, recount repeat masks if a BED file is given (default: null)")
+    parser.add_argument('--repeats_index', default=None,
+              help = "Bowtie2 index of repeat mask fasta file (default: null)")
+    parser.add_argument('--dry', action='store_true', help = "DEBUG: Dry run")
     parser.add_argument('--skip_trim', action='store_true',  
               help = 'DEBUG: skip trimming')
     parser.add_argument('--skip_premap', action='store_true',  
@@ -101,6 +105,9 @@ def main():
         process_sample.generate_tRNA_count()
         process_sample.generate_rRNA_count()
         process_sample.generate_all_count()
+        if args.repeats and args.repeats_index:
+          process_sample.generate_repeat_count()
+
 
     end = time.time()
     usedTime = end - start

@@ -74,7 +74,7 @@ class sample_object():
                          self.tRNA_raw, self.sample_folder, self.hisat_out, self.rRNA_tRNA_out,
                         self.bowtie_out, self.combined_out, self.tRNA_out, self.rRNA_out]
         mf = map(makeFolder, folders)
-        if self.repeats:
+        if self.rmsk:
             makeFolder(self.repeat_out)
             makeFolder(self.count_rmsk)
 
@@ -284,7 +284,7 @@ class sample_object():
                         .format(count_bam = self.count_bam, bed_path = self.bedpath, combined_path = self.combined_out, option=_option, verb = _verb)
         self.run_process(command)
 
-        if self.repeats:
+        if self.rmsk:
             command = 'bedtools {verb} -f 0.01 {option} -abam {combined_path}/primary_no_sncRNA_tRNA_rRNA.bam -b {rmsk_bed} > {combined_path}/primary_no_sncRNA_tRNA_rRNA_repeats.bam' \
                 .format(count_bam = self.count_bam, option=_option, bed_path = self.bedpath, combined_path = self.combined_out, verb = _verb, rmsk_bed = self.rmsk)
             self.run_process(command)
@@ -441,19 +441,19 @@ class sample_object():
     def generate_repeat_count(self):
         # repeat reads process
         if not self.single_end:
-            command = 'bamToFastq -i {combined_path}/repeat.bam -fq /dev/stdout -fq2 /dev/stdout '.format(combined_path =self.combined_out)  +\
+            command = 'bamToFastq -i {combined_path}/repeats.bam -fq /dev/stdout -fq2 /dev/stdout '.format(combined_path =self.combined_out)  +\
                 '> {repeat_path}/repeats.fq'.format(repeat_path=self.repeat_out)
             self.run_process(command)
             _option=' --interleaved '
 
         else:
-            command = 'bamToFastq -i {combined_path}/repeat.bam -fq /dev/stdout -fq2 /dev/stdout '.format(combined_path =self.combined_out)  +\
+            command = 'bamToFastq -i {combined_path}/repeats.bam -fq /dev/stdout -fq2 /dev/stdout '.format(combined_path =self.combined_out)  +\
                 '> {repeat_path}/repeats.fq'.format(repeat_path=self.repeat_out)
             self.run_process(command)
             _option=' -U '
 
         command = 'bowtie2 -p {threads} --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
-                        '--norc --no-mixed --no-discordant -x {repeat_index} '.format(repeat_index=self.rmsk_index)+\
+                        '--no-mixed --no-discordant -x {repeat_index} '.format(repeat_index=self.rmsk_index)+\
                         ' {option} {repeat_path}/repeats.fq'.format(option=_option, repeat_path=self.repeat_out)+\
                         '| samtools view -bS@ {threads} - > {repeat_path}/repeat_remap.bam'.format(repeat_path=self.repeat_out, threads=self.threads)
         self.run_process(command)

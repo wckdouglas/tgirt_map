@@ -447,7 +447,8 @@ class sample_object():
             _option=' --interleaved '
 
         else:
-            command = 'bamToFastq -i {combined_path}/repeats.bam -fq /dev/stdout -fq2 /dev/stdout '.format(combined_path =self.combined_out)  +\
+            command = 'samtools fastq -@ {threads} {combined_path}/repeats.bam -N '\
+                        .format(combined_path =self.combined_out, threds=self.threds)  +\
                 '> {repeat_path}/repeats.fq'.format(repeat_path=self.repeat_out)
             self.run_process(command)
             _option=' -U '

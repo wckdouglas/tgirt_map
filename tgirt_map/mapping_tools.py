@@ -441,7 +441,8 @@ class sample_object():
     def generate_repeat_count(self):
         # repeat reads process
         if not self.single_end:
-            command = 'bamToFastq -i {combined_path}/repeats.bam -fq /dev/stdout -fq2 /dev/stdout '.format(combined_path =self.combined_out)  +\
+            command = 'samtools fastq -@ {threads} -i {combined_path}/repeats.bam '\
+                        .format(combined_path =self.combined_out, threads = self.threads)  +\
                 '> {repeat_path}/repeats.fq'.format(repeat_path=self.repeat_out)
             self.run_process(command)
             _option=' --interleaved '

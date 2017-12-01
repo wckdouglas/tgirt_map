@@ -20,6 +20,8 @@ class sample_object():
         self.rRNA_index = args.rRNAindex
         self.rRNA_tRNA_index = args.rRNA_tRNA_index
         self.threads = args.threads
+        self.rmsk = args.repeats
+        self.rmsk_index = args.repeats_index
         self.UMI = args.umi
         self.TTN = args.TTN
         self.dry = args.dry
@@ -34,6 +36,7 @@ class sample_object():
         self.count_folder= self.outpath + '/Counts'
         self.count_raw = self.count_folder + '/RAW'
         self.tRNA_raw = self.count_folder + '/tRNA_RAW'
+        self.count_rmsk = self.count_folder + '/repeat_RAW'
 
         #define sample folder
         self.samplename = re.sub('.fastq|.gz|.fq','',self.fastq1.split('/')[-1])
@@ -44,6 +47,7 @@ class sample_object():
         self.combined_out = self.sample_folder + '/Combined'
         self.tRNA_out = self.sample_folder + '/tRNA'
         self.rRNA_out = self.sample_folder + '/rRNA'
+        self.repeat_out = self.sample_folder + '/repeats'
 
         #make output file names
         self.trimed1= '%s/%s.1.fq.gz' %(self.trim_folder, self.samplename)
@@ -70,6 +74,9 @@ class sample_object():
                          self.tRNA_raw, self.sample_folder, self.hisat_out, self.rRNA_tRNA_out,
                         self.bowtie_out, self.combined_out, self.tRNA_out, self.rRNA_out]
         mf = map(makeFolder, folders)
+        if self.rmsk:
+            makeFolder(self.repeat_out)
+            makeFolder(self.count_rmsk)
 
 
     def trimming(self):
@@ -95,7 +102,7 @@ class sample_object():
         else:
             command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '.format(file1= self.fastq1, file2= self.fastq2, umi=self.UMI*'X')+\
                         '--barcodeCutOff=20 --outputprefix=- --prefix_split=0 -r read1 '+\
-                    '| cutadapt -m 15 -O 5 -n 3 {option} -q 20 -b {R1} -B {R2} --interleaved --quiet - '.format(option=option, R1=R2R,R2=R1R)+\
+                    '| cutadapt --nextseq-trim=20 -m 15 -O 5 -n 3 {option} -q 20 -b {R1} -B {R2} --interleaved --quiet - '.format(option=option, R1=R2R,R2=R1R)+\
                     '| deinterleave_fastq.py - {trimed1} {trimed2} '.format(trimed1=self.trimed1, trimed2=self.trimed2)
         self.run_process(command)
 
@@ -203,7 +210,7 @@ class sample_object():
 
     def combined_aligned(self):
         _multi_option = '--single_end' if self.single_end else ' '
-        _soft_clip_option = '--pe' if not self.single_end else ' '
+        _soft_clip_option = '--pe ' if not self.single_end else ' '
         command = 'samtools cat %s/hisat.multi.bam %s/bowtie.multi.bam ' %(self.hisat_out, self.bowtie_out)+\
                 ' > %s/multi.bam' %(self.combined_out)
         self.run_process(command)
@@ -214,7 +221,7 @@ class sample_object():
         self.run_process(command)
 
         command ='samtools cat %s/multi_filtered.bam %s/hisat.unique.bam %s/bowtie.unique.bam' %(self.combined_out, self.hisat_out, self.bowtie_out) +\
-                '| filter_soft_clip.py -s 0.2 -b 0.5 -i - -o - %s' %_soft_clip_option + \
+                '| filter_soft_clip.py -s 0.1 -b 0.2 -i - -o - %s' %_soft_clip_option + \
                 '| samtools sort -n -@ %i -O bam -T %s/temp ' %(self.threads,self.combined_out) +\
                 '> %s/primary.bam' %(self.combined_out)
         self.run_process(command)
@@ -276,6 +283,15 @@ class sample_object():
         command = 'bedtools {verb} -s -f 0.01 {option} -abam {count_bam} -b {bed_path}/sncRNA_rRNA_for_bam_filter.bed > {combined_path}/primary_no_sncRNA_tRNA_rRNA.bam' \
                         .format(count_bam = self.count_bam, bed_path = self.bedpath, combined_path = self.combined_out, option=_option, verb = _verb)
         self.run_process(command)
+
+        if self.rmsk:
+            command = 'bedtools {verb} -f 0.01 {option} -abam {combined_path}/primary_no_sncRNA_tRNA_rRNA.bam -b {rmsk_bed} > {combined_path}/primary_no_sncRNA_tRNA_rRNA_repeats.bam' \
+                .format(count_bam = self.count_bam, option=_option, bed_path = self.bedpath, combined_path = self.combined_out, verb = _verb, rmsk_bed = self.rmsk)
+            self.run_process(command)
+
+            command = 'bedtools {verb} -f 0.01 -abam {combined_path}/primary_no_sncRNA_tRNA_rRNA.bam -b {rmsk_bed} > {combined_path}/repeats.bam' \
+                .format(count_bam = self.count_bam, bed_path = self.bedpath, combined_path = self.combined_out, verb = _verb, rmsk_bed = self.rmsk)
+            self.run_process(command)
 
 
     def make_alignment_bed(self):
@@ -407,8 +423,6 @@ class sample_object():
                 command = 'bedtools bamtobed -i {rRNA_path}/rRNA_remap.bam  > {rRNA_path}/rRNA.bed'.format(rRNA_path=self.rRNA_out)
             self.run_process(command)
 
-
-
         command = 'bedtools coverage -s -counts -F 0.1 -a {bed_path}/rRNA.bed -b {rRNA_path}/rRNA.bed > {rRNA_path}/rRNA.counts'.format(bed_path=self.bedpath, rRNA_path=self.rRNA_out)
         self.run_process(command)
 
@@ -423,6 +437,68 @@ class sample_object():
         command = 'cat {combined}/non_sRNAs.counts {combined}/sncRNA.counts {rRNA_path}/rRNA.counts '.format(combined=self.combined_out, rRNA_path=self.rRNA_out) +\
                 '> {count_path}/{samplename}.counts'.format(count_path=self.count_raw, samplename = self.samplename)
         self.run_process(command)
+
+    def generate_repeat_count(self):
+        # repeat reads process
+        if not self.single_end:
+            command = 'samtools fastq -@ {threads} -i {combined_path}/repeats.bam '\
+                        .format(combined_path =self.combined_out, threads = self.threads)  +\
+                '> {repeat_path}/repeats.fq'.format(repeat_path=self.repeat_out)
+            self.run_process(command)
+            _option=' --interleaved '
+
+        else:
+            command = 'samtools fastq -@ {threads} {combined_path}/repeats.bam -N '\
+                        .format(combined_path =self.combined_out, threds=self.threds)  +\
+                '> {repeat_path}/repeats.fq'.format(repeat_path=self.repeat_out)
+            self.run_process(command)
+            _option=' -U '
+
+        command = 'bowtie2 -p {threads} --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
+                        '--no-mixed --no-discordant -x {repeat_index} '.format(repeat_index=self.rmsk_index)+\
+                        ' {option} {repeat_path}/repeats.fq'.format(option=_option, repeat_path=self.repeat_out)+\
+                        '| samtools view -bS@ {threads} - > {repeat_path}/repeat_remap.bam'.format(repeat_path=self.repeat_out, threads=self.threads)
+        self.run_process(command)
+
+        if self.UMI > 0 and not self.count_all:
+            command = ' bam_umi_tag.py --in_bam %s/repeat_remap.bam --out_bam - --tag RX ' %(self.repeat_out)+\
+                    '| picard SortSam I=/dev/stdin O=/dev/stdout SORT_ORDER=queryname '+\
+                    '| picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true INPUT=/dev/stdin OUTPUT=/dev/stdout ' +\
+                    '| samtools sort -@ {threads} -T {repeat_path}/repeat -O bam > {repeat_path}/repeat_remap.sort.bam'\
+                        .format(threads=self.threads, repeat_path=self.repeat_out)
+            self.run_process(command)
+            command = 'samtools index {repeat_path}/repeat_remap.sort.bam'.format(repeat_path=self.repeat_out)
+            self.run_process(command)
+            dedup_command = 'picard UmiAwareMarkDuplicatesWithMateCigar UMI_METRICS_FILE=%s/repeat.umi_metric ' %(self.repeat_out)+\
+                            'MAX_EDIT_DISTANCE_TO_JOIN=1 TAG_DUPLICATE_SET_MEMBERS=true ' +\
+                            'UMI_TAG_NAME=RX INPUT={repeat_path}/repeat_remap.sort.bam OUTPUT=/dev/stdout '.format(repeat_path=self.repeat_out) +\
+                            'METRICS_FILE=%s/repeat.duplicate_metrics REMOVE_DUPLICATES=false ASSUME_SORT_ORDER=coordinate ' %(self.repeat_out)   +\
+                            '| samtools sort -n@ {threads} -T {repeat_path}/repeat -O bam - > {repeat_path}/repeat_remap.dedup.bam'.format(threads=self.threads, repeat_path=self.repeat_out)
+            self.run_process(dedup_command)
+            command = 'cat {repeat_path}/repeat_remap.dedup.bam | bam_to_bed.py -i - -o {repeat_path}/repeat.bed -m 5 -M 10000'.format(repeat_path=self.repeat_out)
+            self.run_process(command)
+        else:
+            if not self.single_end:
+                command = 'bam_to_bed.py -i {repeat_path}/repeat_remap.bam  -o {repeat_path}/repeat.bed -m 5 -M 10000'.format(repeat_path=self.repeat_out)
+            else:
+                command = 'bedtools bamtobed -i {repeat_path}/repeat_remap.bam  > {repeat_path}/repeat.bed'.format(repeat_path=self.repeat_out)
+            self.run_process(command)
+
+        repeat_count = defaultdict(int)
+        repeat_bed = self.repeat_out + '/repeat.bed'
+        repeat_count_file = self.count_rmsk + '/' + self.samplename + '.repeat'
+        print('Reading from %s' %repeat_bed, file=sys.stderr)
+        if not self.dry:
+            with open(repeat_bed,'r') as bed:
+                for line in bed:
+                    repeat=line.split('\t')[0]
+                    repeat_count[repeat] += 1
+
+            with open(repeat_count_file, 'w') as count_file:
+                for key, value in repeat_count.iteritems():
+                    count_file.write('%s\t%i\n' %(key, value))
+        print('Written %s' %repeat_count_file, file=sys.stderr)
+ 
 
 def system_run(dry, samplename, command):
     print('[%s] Running: %s' %(samplename, command), file=sys.stderr)

@@ -82,21 +82,23 @@ class sample_object():
     def trimming(self):
         R2R = 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
         R1R = 'GATCGTCGGACTGTAGAACTCTGAACGTGTAGA'
+        R2 = 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTN'
         if self.TTN:
                 option='-U 1'
-                R2R = 'A' + R2R
+                R2R = 'A' + R2R 
+                R2 = R2.replace('TCTN','TCTTN')
         else:
                 option = ''
 
         if self.UMI == 0:
             if not self.single_end:
-                command = 'cutadapt -m 15 -O 5 -n 3 {option} --nextseq-trim=20 -q 20 -b {R1} -B {R2} -o {trimed1} -p {trimed2} {file1} {file2}'\
-                        .format(R1=R2R, R2=R1R, option= option,
+                command = 'cutadapt -m 15 -O 5 -n 3 {option} --nextseq-trim=20 -b {R2} -q 20 -a {R2R} -A {R1R} -B {R2R} -o {trimed1} -p {trimed2} {file1} {file2}'\
+                        .format(R2R=R2R, R1R=R1R, option= option, R2 = R2,
                                 trimed1=self.trimed1, trimed2=self.trimed2,
                                 file1= self.fastq1, file2= self.fastq2)
             else:
-                command = 'cutadapt -m 15 -O 5 -n 3 {option} --nextseq-trim=20 -q 20 -b {R1} -o {trimed1} {file1}'\
-                        .format(R1=R2R, option= option,
+                command = 'cutadapt -m 15 -O 5 -n 3 {option} --nextseq-trim=20 -q 20 -a {R1R} -b {R2} -o {trimed1} {file1}'\
+                        .format(R1R=R2R, option= option, R2 = R2,
                                 trimed1=self.trimed1,
                                 file1= self.fastq1)
         else:
@@ -441,14 +443,14 @@ class sample_object():
     def generate_repeat_count(self):
         # repeat reads process
         if not self.single_end:
-            command = 'samtools fastq -@ {threads} -i {combined_path}/repeats.bam '\
+            command = 'samtools fastq -N@ {threads} {combined_path}/repeats.bam '\
                         .format(combined_path =self.combined_out, threads = self.threads)  +\
                 '> {repeat_path}/repeats.fq'.format(repeat_path=self.repeat_out)
             self.run_process(command)
             _option=' --interleaved '
 
         else:
-            command = 'samtools fastq -@ {threads} {combined_path}/repeats.bam -N '\
+            command = 'samtools fastq -@ {threads} {combined_path}/repeats.bam '\
                         .format(combined_path =self.combined_out, threds=self.threds)  +\
                 '> {repeat_path}/repeats.fq'.format(repeat_path=self.repeat_out)
             self.run_process(command)

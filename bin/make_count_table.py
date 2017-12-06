@@ -11,8 +11,6 @@ import sys
 from tgirt_map.table_tool import change_gene_type
 
 
-
-
 def readDF(count_file_name):
     df = pd.read_table(count_file_name, header=None)  \
         .pipe(lambda d: d[[3,6,7,8]])
@@ -37,7 +35,7 @@ def readSample(count_file_path, tRNA_count_path, sample_id):
 
 def main():
     if len(sys.argv) != 2:
-        sys.exit('[usage] python %s <count_file_path>' %(sys.argv[0]))
+        sys.exit('[usage] python %s <output_folder_path>' %(sys.argv[0]))
     project_path = sys.argv[1] 
     count_file_path = project_path + '/Counts/RAW'
     tRNA_count_path = project_path + '/Counts/tRNA_RAW'

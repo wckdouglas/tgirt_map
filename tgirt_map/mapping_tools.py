@@ -462,29 +462,11 @@ class sample_object():
                         '| samtools view -bS@ {threads} - > {repeat_path}/repeat_remap.bam'.format(repeat_path=self.repeat_out, threads=self.threads)
         self.run_process(command)
 
-        if self.UMI > 0 and not self.count_all:
-            command = ' bam_umi_tag.py --in_bam %s/repeat_remap.bam --out_bam - --tag RX ' %(self.repeat_out)+\
-                    '| picard SortSam I=/dev/stdin O=/dev/stdout SORT_ORDER=queryname '+\
-                    '| picard FixMateInformation ADD_MATE_CIGAR=true ASSUME_SORTED=true INPUT=/dev/stdin OUTPUT=/dev/stdout ' +\
-                    '| samtools sort -@ {threads} -T {repeat_path}/repeat -O bam > {repeat_path}/repeat_remap.sort.bam'\
-                        .format(threads=self.threads, repeat_path=self.repeat_out)
-            self.run_process(command)
-            command = 'samtools index {repeat_path}/repeat_remap.sort.bam'.format(repeat_path=self.repeat_out)
-            self.run_process(command)
-            dedup_command = 'picard UmiAwareMarkDuplicatesWithMateCigar UMI_METRICS_FILE=%s/repeat.umi_metric ' %(self.repeat_out)+\
-                            'MAX_EDIT_DISTANCE_TO_JOIN=1 TAG_DUPLICATE_SET_MEMBERS=true ' +\
-                            'UMI_TAG_NAME=RX INPUT={repeat_path}/repeat_remap.sort.bam OUTPUT=/dev/stdout '.format(repeat_path=self.repeat_out) +\
-                            'METRICS_FILE=%s/repeat.duplicate_metrics REMOVE_DUPLICATES=false ASSUME_SORT_ORDER=coordinate ' %(self.repeat_out)   +\
-                            '| samtools sort -n@ {threads} -T {repeat_path}/repeat -O bam - > {repeat_path}/repeat_remap.dedup.bam'.format(threads=self.threads, repeat_path=self.repeat_out)
-            self.run_process(dedup_command)
-            command = 'cat {repeat_path}/repeat_remap.dedup.bam | bam_to_bed.py -i - -o {repeat_path}/repeat.bed -m 5 -M 10000'.format(repeat_path=self.repeat_out)
-            self.run_process(command)
+        if not self.single_end:
+            command = 'bam_to_bed.py -i {repeat_path}/repeat_remap.bam  -o {repeat_path}/repeat.bed -m 5 -M 10000'.format(repeat_path=self.repeat_out)
         else:
-            if not self.single_end:
-                command = 'bam_to_bed.py -i {repeat_path}/repeat_remap.bam  -o {repeat_path}/repeat.bed -m 5 -M 10000'.format(repeat_path=self.repeat_out)
-            else:
-                command = 'bedtools bamtobed -i {repeat_path}/repeat_remap.bam  > {repeat_path}/repeat.bed'.format(repeat_path=self.repeat_out)
-            self.run_process(command)
+            command = 'bedtools bamtobed -i {repeat_path}/repeat_remap.bam  > {repeat_path}/repeat.bed'.format(repeat_path=self.repeat_out)
+        self.run_process(command)
 
         repeat_count = defaultdict(int)
         repeat_bed = self.repeat_out + '/repeat.bed'

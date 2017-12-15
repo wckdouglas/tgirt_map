@@ -111,7 +111,7 @@ class sample_object():
         else:
             command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '.format(file1= self.fastq1, file2= self.fastq2, umi=self.UMI*'X')+\
                         '--barcodeCutOff=20 --outputprefix=- --prefix_split=0 -r read1 '+\
-                    '| cutadapt {option} {shared_options} --interleaved --quiet - '.format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options)+\
+                    '| cutadapt {option} {shared_options} {adaptors} --interleaved --quiet - '.format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options)+\
                     '| deinterleave_fastq.py -i - -1 {trimed1} -2 {trimed2} '.format(trimed1=self.trimed1, trimed2=self.trimed2)
         self.run_process(command)
 

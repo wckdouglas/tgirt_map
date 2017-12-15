@@ -89,8 +89,8 @@ class sample_object():
                 R2 = R2.replace('TCTN','TCTTN')
         else:
                 option = ''
-        R2_frac = R2[-13:]
-        R2R_frac = R2R[:13]
+        R2_frac = R2[-14:]
+        R2R_frac = R2R[:14]
 
 
         single_end_adaptor = '-a {R2R} -b {R2_frac} -g {R2} '.format(R2R=R2R, R2 = R2, R2_frac=R2_frac)
@@ -108,7 +108,7 @@ class sample_object():
                         .format(adaptors=single_end_adaptor, option= option, shared_options=shared_options,
                                 trimed1=self.trimed1,
                                 file1= self.fastq1)
-        else:
+        elif self.UMI > 0:
             command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '.format(file1= self.fastq1, file2= self.fastq2, umi=self.UMI*'X')+\
                         '--barcodeCutOff=20 --outputprefix=- --prefix_split=0 -r read1 '+\
                     '| cutadapt {option} {shared_options} {adaptors} --interleaved --quiet - '.format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options)+\

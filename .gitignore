@@ -1,0 +1,8 @@
+*info
+build/*
+dist/*
+*pyc
+*.c
+*.so
+build
+*c

@@ -89,22 +89,29 @@ class sample_object():
                 R2 = R2.replace('TCTN','TCTTN')
         else:
                 option = ''
+        R2_frac = R2[-13:]
+        R2R_frac = R2R[:13]
+
+
+        single_end_adaptor = '-a {R2R} -b {R2_frac} -g {R2}'.format(R2R=R2R, R2 = R2, R2_frac=R2_frac)
+        paired_end_adaptor = single_end_adaptor + '-A {R1R} -B {R2R_frac} -G {R2R}'.format(R2R=R2R, R1R=R1R, R2R_frac=R2R_frac)
+        shared_options = '--nextseq-trim=20 --error-rate=0.2  -q 20 -m 15 -O 5 -n 3 '
 
         if self.UMI == 0:
             if not self.single_end:
-                command = 'cutadapt -m 15 -O 5 -n 3 {option} --nextseq-trim=20 --error-rate=0.2 -g {R2} -q 20 -a {R2R} -A {R1R} -G {R2R} -o {trimed1} -p {trimed2} {file1} {file2}'\
-                        .format(R2R=R2R, R1R=R1R, option= option, R2 = R2,
+                command = 'cutadapt {option} {adaptors} {shared_options} -o {trimed1} -p {trimed2} {file1} {file2}'\
+                        .format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options,
                                 trimed1=self.trimed1, trimed2=self.trimed2,
                                 file1= self.fastq1, file2= self.fastq2)
             else:
-                command = 'cutadapt -m 15 -O 5 -n 3 {option} --nextseq-trim=20 --error-rate=0.2 -q 20 -a {R1R} -g {R2} -o {trimed1} {file1}'\
-                        .format(R1R=R2R, option= option, R2 = R2,
+                command = 'cutadapt {option} {shared_options} --nextseq-trim=20 --error-rate=0.2 -q 20 -o {trimed1} {file1}'\
+                        .format(adaptors=single_end_adaptor, option= option, shared_options=shared_options,
                                 trimed1=self.trimed1,
                                 file1= self.fastq1)
         else:
             command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '.format(file1= self.fastq1, file2= self.fastq2, umi=self.UMI*'X')+\
                         '--barcodeCutOff=20 --outputprefix=- --prefix_split=0 -r read1 '+\
-                    '| cutadapt --nextseq-trim=20 -m 15 -O 5 -n 3 --error-rate=0.2 {option} -q 20 -g {R2} -q 20 -a {R2R} -A {R1R} -G {R2R} --interleaved --quiet - '.format(option=option, R2R=R2R, R1R=R1R, R2 = R2)+\
+                    '| cutadapt {option} {shared_options} --interleaved --quiet - '.format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options)+\
                     '| deinterleave_fastq.py -i - -1 {trimed1} -2 {trimed2} '.format(trimed1=self.trimed1, trimed2=self.trimed2)
         self.run_process(command)
 

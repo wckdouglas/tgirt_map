@@ -93,7 +93,7 @@ class sample_object():
         R2R_frac = R2R[:13]
 
 
-        single_end_adaptor = '-a {R2R} -b {R2_frac} -g {R2}'.format(R2R=R2R, R2 = R2, R2_frac=R2_frac)
+        single_end_adaptor = '-a {R2R} -b {R2_frac} -g {R2} '.format(R2R=R2R, R2 = R2, R2_frac=R2_frac)
         paired_end_adaptor = single_end_adaptor + '-A {R1R} -B {R2R_frac} -G {R2R}'.format(R2R=R2R, R1R=R1R, R2R_frac=R2R_frac)
         shared_options = '--nextseq-trim=20 --error-rate=0.2  -q 20 -m 15 -O 5 -n 3 '
 

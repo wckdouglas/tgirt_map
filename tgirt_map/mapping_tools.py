@@ -96,9 +96,9 @@ class sample_object():
 
         single_end_adaptor = '-a {R2R} '.format(R2R=R2R)
         paired_end_adaptor = single_end_adaptor + '-A {R1R} '.format(R1R=R1R)
-        shared_options = '--nextseq-trim=20 -q 20 -m 15 -O 5 '
+        shared_options = '-q 20 -m 15 -O 5 '
         if self.trim_hard:
-            shared_options +=  '--max-n=3 --error-rate=0.2 -g {R2} -G {R2R} -B {R2R_frac} -b {R2_frac} '\
+            shared_options +=  '--nextseq-trim=20 --max-n=3 --error-rate=0.2 -g {R2} -G {R2R} -B {R2R_frac} -b {R2_frac} '\
                             .format(R2R=R2R, R2 = R2, R2_frac=R2_frac, R2R_frac=R2R_frac) 
         else:
             shared_options += '--error-rate=0.1 '
@@ -139,7 +139,7 @@ class sample_object():
             tRNA_extract = '| bamToFastq -fq {TRNA_FASTQ1} -i -'.format(TRNA_FASTQ1=self.tRNA_fastq1)
             unmap_extract = '| bamToFastq -fq {PREMAP_FASTQ1} -i - '.format(PREMAP_FASTQ1=self.premap_fastq1)
 
-        command =  'bowtie2 -p {threads} -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
+        command =  'bowtie2 -p {threads} --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
                 '--no-mixed --norc --no-discordant --dovetail ' +\
                 '-x {tRNA_rRNA_index} '.format(tRNA_rRNA_index = self.rRNA_tRNA_index) +\
                 _input + \
@@ -409,7 +409,7 @@ class sample_object():
 
             _input = '-U {rRNA_path}/rRNA.1.fq.gz'.format(rRNA_path=self.rRNA_out)
 
-        command = 'bowtie2 -p {threads} -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
+        command = 'bowtie2 -p {threads} --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
                 '--no-mixed --dovetail --no-discordant -x {rRNA_index} '.format(rRNA_index=self.rRNA_index) +\
                 _input +\
                 '| samtools view -bS@ {threads} - > {rRNA_path}/rRNA_remap.bam'.format(rRNA_path=self.rRNA_out, threads=self.threads)

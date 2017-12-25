@@ -24,6 +24,7 @@ class sample_object():
         self.rmsk_index = args.repeats_index
         self.UMI = args.umi
         self.TTN = args.TTN
+        self.trim_hard = args.trim_aggressive
         self.dry = args.dry
         self.count_all = args.count_all
 
@@ -93,9 +94,14 @@ class sample_object():
         R2R_frac = R2R[:14]
 
 
-        single_end_adaptor = '-a {R2R} -b {R2_frac} -g {R2} '.format(R2R=R2R, R2 = R2, R2_frac=R2_frac)
-        paired_end_adaptor = single_end_adaptor + '-A {R1R} -B {R2R_frac} -G {R2R}'.format(R2R=R2R, R1R=R1R, R2R_frac=R2R_frac)
-        shared_options = '--nextseq-trim=20 --error-rate=0.2  -q 20 -m 15 -O 5 -n 3 --max-n=3 '
+        single_end_adaptor = '-a {R2R}'.format(R2R=R2R)
+        paired_end_adaptor = single_end_adaptor + '-A {R1R}'.format(R1R=R1R)
+        shared_options = '--nextseq-trim=20 -q 20 -m 15 -O 5 '
+        if args.trim_hard:
+            shared_options +=  '--max-n=3 --error-rate=0.2 -g {R2} -G {R2R} -B {R2R_frac} -b {R2_frac}'\
+                            .format(R2R=R2R, R2 = R2, R2_frac=R2_frac, R2R_frac=R2R_frac) 
+        else:
+            shared_options += '--error-rate=0.1 '
 
         if self.UMI == 0:
             if not self.single_end:

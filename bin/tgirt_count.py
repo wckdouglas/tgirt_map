@@ -42,6 +42,8 @@ def getopt():
               help = 'number of cores to be used for the pipeline (default:1)')
     parser.add_argument('--TTN', action='store_true',  
               help = 'used TTN primer')
+    parser.add_argument('--trim_aggressive', action='store_true',  
+              help = 'trim all R2R to R2R junction')
     parser.add_argument('--umi', default=0, type=int,
               help = "Number of UMI bases from 5' of R1 (default = 0)")
     parser.add_argument('--count_all', action='store_true',

@@ -94,11 +94,11 @@ class sample_object():
         R2R_frac = R2R[:14]
 
 
-        single_end_adaptor = '-a {R2R}'.format(R2R=R2R)
-        paired_end_adaptor = single_end_adaptor + '-A {R1R}'.format(R1R=R1R)
+        single_end_adaptor = '-a {R2R} '.format(R2R=R2R)
+        paired_end_adaptor = single_end_adaptor + '-A {R1R} '.format(R1R=R1R)
         shared_options = '--nextseq-trim=20 -q 20 -m 15 -O 5 '
         if self.trim_hard:
-            shared_options +=  '--max-n=3 --error-rate=0.2 -g {R2} -G {R2R} -B {R2R_frac} -b {R2_frac}'\
+            shared_options +=  '--max-n=3 --error-rate=0.2 -g {R2} -G {R2R} -B {R2R_frac} -b {R2_frac} '\
                             .format(R2R=R2R, R2 = R2, R2_frac=R2_frac, R2R_frac=R2R_frac) 
         else:
             shared_options += '--error-rate=0.1 '

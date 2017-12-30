@@ -19,8 +19,10 @@ def readDF(count_file_name):
 
 def read_tRNA(count_file_name):
     df = pd.read_table(count_file_name, names= ['id','count'])  \
-            .assign(name = lambda d: d['id']) \
-            .assign(type = 'tRNA')
+        .assign(type = 'tRNA') \
+        .assign(name = lambda d: np.where(d.id.str.contains('tRNA'),
+                                        d.id.str.extract('(tRNA-[A-Za-z]{3,5}-[ACTGN]{3})', expand=False),
+                                        d.id.str.extract('(MT-.*)', expand=False)))
     return df
 
 

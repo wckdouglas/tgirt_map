@@ -94,14 +94,22 @@ class sample_object():
         R2R_frac = R2R[:14]
 
 
-        single_end_adaptor = '-a {R2R} '.format(R2R=R2R)
+        single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
         paired_end_adaptor = single_end_adaptor + '-A {R1R} '.format(R1R=R1R)
-        shared_options = '-q 20 -m 15 -O 5 '
+        shared_options = '--minimum-length=15 '
         if self.trim_hard:
-            shared_options +=  '--nextseq-trim=20 --max-n=3 --error-rate=0.2 -g {R2} -G {R2R} -B {R2R_frac} -b {R2_frac} '\
-                            .format(R2R=R2R, R2 = R2, R2_frac=R2_frac, R2R_frac=R2R_frac) 
+            '''
+                -B anywhere 
+                -G front 
+                -A adapter
+            '''
+            shared_options += '--overlap 3 --nextseq-trim=25 --max-n=3 --error-rate=0.2 --front={R2} --anywhere={R2_frac} '\
+                            .format(R2 = R2, R2_frac=R2_frac) 
+            if not self.single_end:
+                shared_options += '-G {R2R} -B {R2R_frac} '.format(R2R=R2R, R2R_frac=R2R_frac) 
+
         else:
-            shared_options += '--error-rate=0.1 '
+            shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20 '
 
         if self.UMI == 0:
             if not self.single_end:

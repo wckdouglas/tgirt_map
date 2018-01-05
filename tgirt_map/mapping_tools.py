@@ -13,6 +13,7 @@ class sample_object():
         self.fastq2 = args.fastq2
         self.outpath = args.outdir
         self.hisat_index = args.hisat_index
+        self.hisat2 = args.hisat2
         self.bowtie2_index = args.bowtie2_index
         self.bedpath = args.bedpath
         self.splicesite = args.splicesite
@@ -192,7 +193,8 @@ class sample_object():
 
 
         # map reads
-        command = 'hisat2 -p {threads} -k 10 --no-mixed --no-discordant --new-summary '.format(threads=self.threads)+\
+        hisat2 = self.hisat2 + ' --dovetail' if self.hisat2 != 'hisat2' else self.hisat2
+        command = '{hisat2} -p {threads} -k 10 --no-mixed --no-discordant --new-summary '.format(hisat2 = hisat2, threads=self.threads)+\
                 '--known-splicesite-infile {Splicesite} '.format(Splicesite=self.splicesite) +\
                 '--novel-splicesite-outfile {hisat_out}/novelsite.txt -x {ref} '.format(hisat_out=self.hisat_out, ref=self.hisat_index)+\
                 _input + \

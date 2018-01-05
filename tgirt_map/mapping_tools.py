@@ -184,7 +184,7 @@ class sample_object():
 
 
         # map reads
-        command = 'hisat2 -p {threads} -k 10 --no-mixed --no-discordant '.format(threads=self.threads)+\
+        command = 'hisat2 -p {threads} -k 10 --no-mixed --no-discordant --new-summary '.format(threads=self.threads)+\
                 '--known-splicesite-infile {Splicesite} '.format(Splicesite=self.splicesite) +\
                 '--novel-splicesite-outfile {hisat_out}/novelsite.txt -x {ref} '.format(hisat_out=self.hisat_out, ref=self.hisat_index)+\
                 _input + \

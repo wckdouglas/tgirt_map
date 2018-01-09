@@ -490,7 +490,7 @@ class sample_object():
         self.run_process(command)
 
         if not self.single_end:
-            command = 'bam_to_bed.py -i {repeat_path}/repeat_remap.bam  -o {repeat_path}/repeat.bed -m 5 -M 10000'.format(repeat_path=self.repeat_out)
+            command = 'filter_umi.py -i {repeat_path}/repeat_remap.bam --consecutive_bases 3 | bam_to_bed.py -i - -o {repeat_path}/repeat.bed -m 5 -M 10000'.format(repeat_path=self.repeat_out)
         else:
             command = 'bedtools bamtobed -i {repeat_path}/repeat_remap.bam  > {repeat_path}/repeat.bed'.format(repeat_path=self.repeat_out)
         self.run_process(command)

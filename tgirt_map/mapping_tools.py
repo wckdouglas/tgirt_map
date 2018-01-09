@@ -483,7 +483,7 @@ class sample_object():
             self.run_process(command)
             _option=' -U '
 
-        command = 'bowtie2 -p {threads} --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
+        command = 'bowtie2 -p {threads} --very-sensitive-local -k10 -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '.format(threads=self.threads)+\
                         '--dovetail --no-mixed --no-discordant -x {repeat_index} '.format(repeat_index=self.rmsk_index)+\
                         ' {option} {repeat_path}/repeats.fq'.format(option=_option, repeat_path=self.repeat_out)+\
                         '| samtools view -bS@ {threads} - > {repeat_path}/repeat_remap.bam'.format(repeat_path=self.repeat_out, threads=self.threads)

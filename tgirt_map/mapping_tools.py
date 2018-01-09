@@ -1,3 +1,4 @@
+
 from __future__ import division, print_function
 import os
 import sys
@@ -314,7 +315,7 @@ class sample_object():
                 .format(count_bam = self.count_bam, option=_option, bed_path = self.bedpath, combined_path = self.combined_out, verb = _verb, rmsk_bed = self.rmsk)
             self.run_process(command)
 
-            command = 'bedtools {verb} -f 0.01 -abam {combined_path}/primary_no_sncRNA_tRNA_rRNA.bam -b {rmsk_bed} > {combined_path}/repeats.bam' \
+            command = 'bedtools {verb} -f 0.5 -abam {combined_path}/primary_no_sncRNA_tRNA_rRNA.bam -b {rmsk_bed} -type both > {combined_path}/repeats.bam' \
                 .format(count_bam = self.count_bam, bed_path = self.bedpath, combined_path = self.combined_out, verb = _verb, rmsk_bed = self.rmsk)
             self.run_process(command)
 
@@ -327,6 +328,7 @@ class sample_object():
 
             command = 'bam_to_bed.py -i {combined_out}/primary_no_sncRNA_tRNA_rRNA.bam  -m 5 -M 1000000 > {combined_out}/primary_no_sRNAs.bed'.format(combined_out=self.combined_out)
             self.run_process(command)
+
         else:
             command = 'bedtools bamtobed  -i {combined_out}/sncRNA.bam > {combined_out}/sncRNA.bed'.format(combined_out=self.combined_out)
             self.run_process(command)
@@ -384,6 +386,7 @@ class sample_object():
                 command = 'bedtools bamtobed -i {tRNA_path}/tRNA_remap.bam  > {tRNA_path}/tRNA.bed'.format(tRNA_path=self.tRNA_out)
             self.run_process(command)
 
+
     def generate_tRNA_count(self):
         tRNA_count = defaultdict(int)
         tRNA_bed = self.tRNA_out + '/tRNA.bed'
@@ -397,8 +400,9 @@ class sample_object():
 
             with open(tRNA_count_file, 'w') as count_file:
                 for key, value in tRNA_count.iteritems():
-                    count_file.write('%s\t%i\n' %(key, value))
+                    print('%s\t%i' %(key, value), file = count_file)
         print('Written %s' %tRNA_count_file, file=sys.stderr)
+
 
     def generate_rRNA_count(self):
 
@@ -491,19 +495,22 @@ class sample_object():
             command = 'bedtools bamtobed -i {repeat_path}/repeat_remap.bam  > {repeat_path}/repeat.bed'.format(repeat_path=self.repeat_out)
         self.run_process(command)
 
-        repeat_count = defaultdict(int)
+        repeat_count = defaultdict(lambda: defaultdict(int))
         repeat_bed = self.repeat_out + '/repeat.bed'
         repeat_count_file = self.count_rmsk + '/' + self.samplename + '.repeat'
         print('Reading from %s' %repeat_bed, file=sys.stderr)
         if not self.dry:
             with open(repeat_bed,'r') as bed:
                 for line in bed:
-                    repeat=line.split('\t')[0]
-                    repeat_count[repeat] += 1
+                    fields = line.strip().split('\t')
+                    repeat = fields[0]
+                    strand = fields[5]
+                    repeat_count[repeat][strand] += 1
 
             with open(repeat_count_file, 'w') as count_file:
-                for key, value in repeat_count.iteritems():
-                    count_file.write('%s\t%i\n' %(key, value))
+                for repeat_name, strand_dict in repeat_count.iteritems():
+                    for strand, value in strand_dict.iteritems():
+                        print('%s\t%s\t%i' %(repeat_name, strand, value), file=count_file)
         print('Written %s' %repeat_count_file, file=sys.stderr)
  
 

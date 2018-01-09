@@ -99,10 +99,9 @@ def main():
         if args.umi > 0 and not args.count_all:
             process_sample.dedup_bam()
 
+    if not args.skip_remap:
         process_sample.combined_filter()
         process_sample.make_alignment_bed()
-
-    if not args.skip_remap:
         process_sample.generate_tRNA_remap()
 
     if not args.skip_count:

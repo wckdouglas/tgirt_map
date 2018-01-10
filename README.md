@@ -67,7 +67,7 @@ optional arguments:
 
 
 ### Required pacakge ###
-It is necessary to install [TGIRT-seq-tools](https://wckdouglas.github.io/tgirt_seq_tools) to run the pipeline correctly as the pipeline extensively used some of the tools.
+It is necessary to install [sequencing_tools](https://wckdouglas.github.io/sequencing_tools) to run the pipeline correctly as the pipeline extensively used some of the tools.
 
 ### building reference ###
 

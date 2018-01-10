@@ -1,7 +1,3 @@
 git clone https://github.com/wckdouglas/sequencing_tools.git
-cd sequencing_tools
-pip install requirements.txt 
-pip install .
-
-cd ../
-pip install .
+pip install ./sequencing_tools/requirements.txt 
+pip install ./sequencing_tools

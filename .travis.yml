@@ -5,8 +5,8 @@ python:
     - "3.6"
 # command to install dependencies
 install: 
-    - bash install.sh
     - pip install .
+    - bash install.sh
 
 # test
 script:

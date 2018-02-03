@@ -197,14 +197,14 @@ class sample_object():
         splice_option = ' '
         if self.novel_splice:
             splice_option = '--pen-canintronlen C,0,0 --pen-noncanintronlen C,1,0 ' +\
-                            '--pen-cansplice 0 --pen-noncansplice 2 --max-intronlen 1000000 '
+                            '--pen-cansplice 0 --pen-noncansplice 2 --max-intronlen 1000000 ' +\
+                            '--rna-strandness FR ' 
 
         # map reads
         hisat2 = self.hisat2 + ' --dovetail' if self.hisat2 != 'hisat2' else self.hisat2
         command = '{hisat2} -p {threads} -k 10 --no-mixed --no-discordant --new-summary '.format(hisat2 = hisat2, threads=self.threads)+\
                 '--known-splicesite-infile {Splicesite} {splice_option} '.format(Splicesite=self.splicesite, splice_option = splice_option) +\
                 '--novel-splicesite-outfile {hisat_out}/novelsite.txt -x {ref} '.format(hisat_out=self.hisat_out, ref=self.hisat_index)+\
-                '--rna-strandness FR ' +\
                 _input + \
                 '| samtools view -bS - > {hisat_out}/hisat.bam'.format(hisat_out=self.hisat_out)
         self.run_process(command)

@@ -29,6 +29,7 @@ class sample_object():
         self.trim_hard = args.trim_aggressive
         self.dry = args.dry
         self.count_all = args.count_all
+        self.novel_splice = args.novel_splice
 
         self.single_end = not self.fastq2
         if self.single_end and self.UMI > 0:
@@ -193,11 +194,17 @@ class sample_object():
             _zip_command = 'gzip -f {bowtie_out}/unmapped.1.fq'.format(bowtie_out=self.bowtie_out)
 
 
+        splice_option = ' '
+        if self.novel_splice:
+            splice_option = '--pen-canintronlen C,0,0 --pen-noncanintronlen C,1,0 ' +\
+                            '--pen-cansplice 0 --pen-noncansplice 2 --max-intronlen 1000000 '
+
         # map reads
         hisat2 = self.hisat2 + ' --dovetail' if self.hisat2 != 'hisat2' else self.hisat2
         command = '{hisat2} -p {threads} -k 10 --no-mixed --no-discordant --new-summary '.format(hisat2 = hisat2, threads=self.threads)+\
-                '--known-splicesite-infile {Splicesite} '.format(Splicesite=self.splicesite) +\
+                '--known-splicesite-infile {Splicesite} {splice_option} '.format(Splicesite=self.splicesite, splice_option = splice_option) +\
                 '--novel-splicesite-outfile {hisat_out}/novelsite.txt -x {ref} '.format(hisat_out=self.hisat_out, ref=self.hisat_index)+\
+                '--rna-strandness FR ' +\
                 _input + \
                 '| samtools view -bS - > {hisat_out}/hisat.bam'.format(hisat_out=self.hisat_out)
         self.run_process(command)

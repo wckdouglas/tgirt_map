@@ -524,14 +524,14 @@ class sample_object():
 def system_run(dry, samplename, command):
     print('[%s] Running: %s' %(samplename, command), file=sys.stderr)
     if dry:
-            return 0
+        return 0
 
     else:
-            start = time.time()
-            os.system(command)
-            end = time.time() - start
-            print('[%s] Used time %.3f min' %(samplename, end/60), file=sys.stderr)
-            return 0
+        start = time.time()
+        os.system(command)
+        end = time.time() - start
+        print('[%s] Used time %.3f min' %(samplename, end/60), file=sys.stderr)
+        return 0
 
 
 def makeFolder(folder):

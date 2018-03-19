@@ -298,7 +298,7 @@ class sample_object():
                         hisat = self.hisat_out, 
                         bowtie = self.bowtie_out, 
                         soft_clip_option = _soft_clip_option, 
-                        threads = self.threads) +\
+                        threads = self.threads) 
         self.run_process(command)
 
 
@@ -481,12 +481,12 @@ class sample_object():
 
         if self.UMI > 0 and not self.count_all:
             command = ' bam_umi_tag.py --in_bam {tRNA_path}/tRNA_remap.bam --out_bam - --tag RX ' \
-                    '| picard SortSam I=/dev/stdin O=/dev/stdout SORT_ORDER=queryname '
-                    '| picard FixMateInformation ADD_MATE_CIGAR=true '
-                        'ASSUME_SORTED=true INPUT=/dev/stdin OUTPUT=/dev/stdout '
+                    '| picard SortSam I=/dev/stdin O=/dev/stdout SORT_ORDER=queryname ' \
+                    '| picard FixMateInformation ADD_MATE_CIGAR=true ' \
+                        'ASSUME_SORTED=true INPUT=/dev/stdin OUTPUT=/dev/stdout ' \
                     '| samtools sort -@ {threads} -T {tRNA_path}/tRNA -O bam '\
                         '> {tRNA_path}/tRNA_remap.sort.bam'\
-                    .format(threads=self.threads, tRNA_path=self.tRNA_out)+
+                    .format(threads=self.threads, tRNA_path=self.tRNA_out)
             self.run_process(command)
             command = 'samtools index {tRNA_path}/tRNA_remap.sort.bam'.format(tRNA_path=self.tRNA_out)
             self.run_process(command)
@@ -567,8 +567,8 @@ class sample_object():
                 '| samtools view -bS@ {threads} - > {rRNA_path}/rRNA_remap.bam'\
                     .format(threads=self.threads,
                             rRNA_index=self.rRNA_index, 
-                            input=_input
-                            rRNA_path=self.rRNA_out) +\
+                            input=_input,
+                            rRNA_path=self.rRNA_out) 
         self.run_process(command)
 
         if self.UMI > 0 and not self.count_all:
@@ -626,7 +626,7 @@ class sample_object():
                     '-b {combined}/primary_no_sRNAs.bed '\
                     '> {combined}/non_sRNAs.counts'\
                     .format(combined=self.combined_out,
-                            bed_path=self.bedpath))
+                            bed_path=self.bedpath)
         self.run_process(command)
 
         command = 'cat {combined}/non_sRNAs.counts '\
@@ -636,7 +636,7 @@ class sample_object():
                 .format(count_path=self.count_raw, 
                         samplename = self.samplename,
                         combined=self.combined_out, 
-                        rRNA_path=self.rRNA_out) \
+                        rRNA_path=self.rRNA_out) 
         self.run_process(command)
 
     def generate_repeat_count(self):
@@ -646,7 +646,7 @@ class sample_object():
                     '> {repeat_path}/repeats.fq'\
                         .format(repeat_path=self.repeat_out,
                                 combined_path =self.combined_out, 
-                                threads = self.threads)  +\
+                                threads = self.threads)
             self.run_process(command)
             _option=' --interleaved '
 

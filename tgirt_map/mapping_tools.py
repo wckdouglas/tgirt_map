@@ -106,7 +106,8 @@ class sample_object():
                 -G front 
                 -A adapter
             '''
-            shared_options += '--overlap 3 --nextseq-trim=25 --times=2 --max-n=3 --error-rate=0.2 --front={R2} --anywhere={R2_frac} '\
+            shared_options += '--overlap 3 --nextseq-trim=25 --times=2 --max-n=3 '\
+                            '--error-rate=0.2 --front={R2} --anywhere={R2_frac} '\
                             .format(R2 = R2, R2_frac=R2_frac) 
             if not self.single_end:
                 shared_options += '-G {R2R} -B {R2R_frac} '.format(R2R=R2R, R2R_frac=R2R_frac) 
@@ -116,20 +117,28 @@ class sample_object():
 
         if self.UMI == 0:
             if not self.single_end:
-                command = 'cutadapt {option} {adaptors} {shared_options} -o {trimed1} -p {trimed2} {file1} {file2}'\
+                command = 'atropos trim {option} {adaptors} {shared_options} -o {trimed1} -p {trimed2} -pe1 {file1} -pe2 {file2}'\
                         .format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options,
                                 trimed1=self.trimed1, trimed2=self.trimed2,
                                 file1= self.fastq1, file2= self.fastq2)
             else:
-                command = 'cutadapt {option} {shared_options} -o {trimed1} {file1}'\
+                command = 'atropos trim {option} {shared_options} -o {trimed1} -se {file1}'\
                         .format(adaptors=single_end_adaptor, option= option, shared_options=shared_options,
                                 trimed1=self.trimed1,
                                 file1= self.fastq1)
         elif self.UMI > 0:
-            command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '.format(file1= self.fastq1, file2= self.fastq2, umi=self.UMI*'X')+\
-                        '--barcodeCutOff=20 --out_file=- -r read1 '+\
-                    '| cutadapt {option} {shared_options} {adaptors} --interleaved --quiet - '.format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options)+\
-                    '| deinterleave_fastq.py -i - -1 {trimed1} -2 {trimed2} '.format(trimed1=self.trimed1, trimed2=self.trimed2)
+            command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '\
+                        ' --barcodeCutOff=20 --out_file=- -r read1 ' \
+                    ' | atropos {option} {shared_options} {adaptors} --interleaved-input - --interleaved-output - --quiet '\
+                    ' | deinterleave_fastq.py -i - -1 {trimed1} -2 {trimed2} '\
+                    .format(file1= self.fastq1, 
+                            file2= self.fastq2, 
+                            umi=self.UMI*'X',
+                            option=option,
+                            adaptors=paired_end_adaptor, 
+                            shared_options=shared_options,
+                            trimed1=self.trimed1, 
+                            trimed2=self.trimed2)
         self.run_process(command)
 
     def premap_tRNA_rRNA(self):

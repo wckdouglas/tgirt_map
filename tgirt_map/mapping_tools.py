@@ -85,13 +85,17 @@ class sample_object():
 
 
     def trimming(self):
+        ''' atropos detected:
+            read1: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC
+            read2: GATCGTCGGACTGTAGAACTCTGAACGTGTAGATCTCGGTGGTCGCCGTATCATT
+        '''
         R2R = 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
         R1R = 'GATCGTCGGACTGTAGAACTCTGAACGTGTAGA'
-        R2 = 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTN'
+        R2 = 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT'
         if self.TTN:
                 option='-U 1'
                 R2R = 'A' + R2R 
-                R2 = R2.replace('TCTN','TCTTN')
+                R2 = re.sub('TCT$','TCTT',R2)
         else:
                 option = ''
         R2_frac = R2[-14:]

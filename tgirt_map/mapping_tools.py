@@ -291,7 +291,7 @@ class sample_object():
         self.run_process(command)
 
         command ='samtools cat {combined}/multi_filtered.bam {hisat}/hisat.unique.bam {bowtie}/bowtie.unique.bam' \
-                '| filter_soft_clip.py -s 0.1 -b 0.2 -i - -o - %{soft_clip_option}' \
+                '| filter_soft_clip.py -s 0.1 -b 0.2 -i - -o - {soft_clip_option}' \
                 '| samtools sort -n -@ {threads} -O bam -T {combined}/temp '\
                 '> {combined}/primary.bam' \
                 .format(combined = self.combined_out, 

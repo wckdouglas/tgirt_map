@@ -100,7 +100,7 @@ class sample_object():
 
         single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
         paired_end_adaptor = single_end_adaptor + '-A {R1R} '.format(R1R=R1R)
-        shared_options = '--minimum-length=15 --threads={threads}'.format(threads=self.threads)
+        shared_options = '--minimum-length=15 --threads={threads} '.format(threads=self.threads)
         if self.trim_hard:
             '''
                 -B anywhere 
@@ -528,7 +528,7 @@ class sample_object():
                     tRNA_count[tRNA] += 1
 
             with open(tRNA_count_file, 'w') as count_file:
-                for key, value in six.iteritem(tRNA_count):
+                for key, value in six.iteritems(tRNA_count):
                     print('%s\t%i' %(key, value), file = count_file)
         print('Written %s' %tRNA_count_file, file=sys.stderr)
 

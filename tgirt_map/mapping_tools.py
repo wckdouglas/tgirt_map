@@ -6,6 +6,7 @@ import time
 from collections import defaultdict
 from functools import partial
 import re
+import six
 
 class sample_object():
     def __init__(self, args):
@@ -527,7 +528,7 @@ class sample_object():
                     tRNA_count[tRNA] += 1
 
             with open(tRNA_count_file, 'w') as count_file:
-                for key, value in tRNA_count.iteritems():
+                for key, value in six.iteritem(tRNA_count.iteritems):
                     print('%s\t%i' %(key, value), file = count_file)
         print('Written %s' %tRNA_count_file, file=sys.stderr)
 
@@ -695,8 +696,8 @@ class sample_object():
                     repeat_count[repeat][strand] += 1
 
             with open(repeat_count_file, 'w') as count_file:
-                for repeat_name, strand_dict in repeat_count.iteritems():
-                    for strand, value in strand_dict.iteritems():
+                for repeat_name, strand_dict in six.iteritems(repeat_count):
+                    for strand, value in six.iteritems(strand_dict):
                         print('%s\t%s\t%i' %(repeat_name, strand, value), file=count_file)
         print('Written %s' %repeat_count_file, file=sys.stderr)
  

@@ -726,10 +726,10 @@ def makeFolder(folder):
     """
             Input a folder name and make a folder if it is non-existed
     """
-    print('Creating %s....\n' %folder, file = sys.stderr)
+    print('Creating %s....' %folder, file = sys.stderr)
     if os.path.isdir(folder):
-        print('%s exists.\n' %folder, file = sys.stderr)
+        print('%s exists.' %folder, file = sys.stderr)
     else:
         os.mkdir(folder)
-        print('Created %s.\n' %folder, file = sys.stderr)
+        print('Created %s.' %folder, file = sys.stderr)
     return 0

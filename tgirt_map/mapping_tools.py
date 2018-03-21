@@ -3,8 +3,9 @@ from __future__ import division, print_function
 import os
 import sys
 import time
-from collections import defaultdict
+from collections import defaultdict, deque
 from functools import partial
+from builtins import map, range
 import re
 import six
 
@@ -15,7 +16,7 @@ class sample_object():
         self.fastq2 = args.fastq2
         self.outpath = args.outdir
         self.hisat_index = args.hisat_index
-        self.hisat2 = args.hisat2
+        #self.hisat2 = args.hisat2
         self.bowtie2_index = args.bowtie2_index
         self.bedpath = args.bedpath
         self.splicesite = args.splicesite
@@ -74,11 +75,13 @@ class sample_object():
 
         self.run_process = partial(system_run, args.dry, self.samplename)
 
+
     def make_result_dir(self):
+        print('Checking output folders', file=sys.stderr)
         folders = [self.outpath, self.trim_folder, self.count_folder, self.count_raw,
                          self.tRNA_raw, self.sample_folder, self.hisat_out, self.rRNA_tRNA_out,
                         self.bowtie_out, self.combined_out, self.tRNA_out, self.rRNA_out]
-        mf = map(makeFolder, folders)
+        mf = deque(map(makeFolder, folders))
         if self.rmsk:
             makeFolder(self.repeat_out)
             makeFolder(self.count_rmsk)
@@ -218,7 +221,7 @@ class sample_object():
                             '--rna-strandness FR ' 
 
         # map reads
-        hisat2 = self.hisat2 + ' --dovetail' if self.hisat2 != 'hisat2' else self.hisat2
+        hisat2 = 'hisat2' # self.hisat2 + ' --dovetail' if self.hisat2 != 'hisat2' else self.hisat2
         command = '{hisat2} -p {threads} -k 10 --no-mixed --no-discordant --new-summary '\
                 '--known-splicesite-infile {splicesite} {splice_option} '\
                 '--novel-splicesite-outfile {hisat_out}/novelsite.txt -x {ref} {input}'\
@@ -723,10 +726,10 @@ def makeFolder(folder):
     """
             Input a folder name and make a folder if it is non-existed
     """
-    sys.stderr.write('Creating %s....\n' %folder)
+    print('Creating %s....\n' %folder, file = sys.stderr)
     if os.path.isdir(folder):
-            sys.stderr.write('%s exists.\n' %folder)
+        print('%s exists.\n' %folder, file = sys.stderr)
     else:
-            os.mkdir(folder)
-            sys.stderr.write('Created %s.\n' %folder)
+        os.mkdir(folder)
+        print('Created %s.\n' %folder, file = sys.stderr)
     return 0

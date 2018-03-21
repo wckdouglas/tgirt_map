@@ -106,7 +106,7 @@ class sample_object():
 
 
         single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
-        paired_end_adaptor = single_end_adaptor + '-A {R1R} '.format(R1R=R1R)
+        paired_end_adaptor = single_end_adaptor + '-A {R1R} --aligner insert '.format(R1R=R1R)
         shared_options = '--minimum-length=15 --threads={threads} '.format(threads=self.threads)
         if self.trim_hard:
             '''

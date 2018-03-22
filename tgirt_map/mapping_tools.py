@@ -106,9 +106,13 @@ class sample_object():
 
 
         single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
-        paired_end_adaptor = single_end_adaptor + '-A {R1R} --aligner insert '.format(R1R=R1R)
+        paired_end_adaptor = single_end_adaptor + \
+                '-A {R1R} '.format(R1R=R1R)
         shared_options = '--minimum-length=15 --threads={threads} '.format(threads=self.threads)
-        if self.trim_hard:
+        if not self.trim_hard:
+            shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20 --aligner insert '
+
+        else:
             '''
                 -B anywhere 
                 -G front 
@@ -120,12 +124,11 @@ class sample_object():
             if not self.single_end:
                 shared_options += '-G {R2R} -B {R2R_frac} '.format(R2R=R2R, R2R_frac=R2R_frac) 
 
-        else:
-            shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20 '
 
         if self.UMI == 0:
             if not self.single_end:
-                command = 'atropos trim {option} {adaptors} {shared_options} -o {trimed1} -p {trimed2} -pe1 {file1} -pe2 {file2}'\
+                command = 'atropos trim {option} {adaptors} {shared_options} '\
+                        '-o {trimed1} -p {trimed2} -pe1 {file1} -pe2 {file2}'\
                         .format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options,
                                 trimed1=self.trimed1, trimed2=self.trimed2,
                                 file1= self.fastq1, file2= self.fastq2)
@@ -137,7 +140,8 @@ class sample_object():
         elif self.UMI > 0:
             command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '\
                         ' --barcodeCutOff=20 --out_file=- -r read1 ' \
-                    ' | atropos {option} {shared_options} {adaptors} --interleaved-input - --interleaved-output - --quiet '\
+                    ' | atropos trim {option} {shared_options} {adaptors} --interleaved-input - '\
+                    ' --interleaved-output - --quiet  --report-file /dev/stderr -f fastq '\
                     ' | deinterleave_fastq.py -i - -1 {trimed1} -2 {trimed2} '\
                     .format(file1= self.fastq1, 
                             file2= self.fastq2, 

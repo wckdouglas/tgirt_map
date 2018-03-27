@@ -22,7 +22,11 @@ def read_tRNA(count_file_name):
         .assign(type = 'tRNA') \
         .assign(name = lambda d: np.where(d.id.str.contains('tRNA'),
                                         d.id.str.extract('(tRNA-[A-Za-z]{3,5}-[ACTGN]{3})', expand=False),
-                                        d.id.str.extract('(MT-.*)', expand=False)))
+                                        d.id.str.extract('(MT-.*)', expand=False))) \
+        .assign(name = lambda d: d.name.str.replace('^Homo_sapiens_|-[0-9]+$',''))\
+        .assign(name = lambda d: d.name.str.replace('-[0-9]+$','')) \
+        .assign(name = lambda d: d.name.str.replace('-[0-9]+$',''))   
+
     return df
 
 

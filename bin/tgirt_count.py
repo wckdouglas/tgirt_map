@@ -69,8 +69,8 @@ def getopt():
               help = 'DEBUG: skip tRNA/rRNA remapping')
     parser.add_argument('--skip_count', action='store_true',  
               help = 'DEBUG: skip counting')
-    parser.add_argument('--hisat2', default='hisat2',  
-              help = "PATH to Douglas's version of HISAT2, to allow dovetails")
+    #parser.add_argument('--hisat2', default='hisat2',  
+    #          help = "PATH to Douglas's version of HISAT2, to allow dovetails")
     args = parser.parse_args()
     return args
 
@@ -81,6 +81,7 @@ def main():
 
     args = getopt()
     process_sample = sample_object(args)
+
     process_sample.make_result_dir()
 
     if not args.skip_trim:

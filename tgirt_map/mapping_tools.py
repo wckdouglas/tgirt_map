@@ -3,8 +3,9 @@ from __future__ import division, print_function
 import os
 import sys
 import time
-from collections import defaultdict
+from collections import defaultdict, deque
 from functools import partial
+from builtins import map, range
 import re
 import six
 
@@ -15,7 +16,7 @@ class sample_object():
         self.fastq2 = args.fastq2
         self.outpath = args.outdir
         self.hisat_index = args.hisat_index
-        self.hisat2 = args.hisat2
+        #self.hisat2 = args.hisat2
         self.bowtie2_index = args.bowtie2_index
         self.bedpath = args.bedpath
         self.splicesite = args.splicesite
@@ -74,24 +75,30 @@ class sample_object():
 
         self.run_process = partial(system_run, args.dry, self.samplename)
 
+
     def make_result_dir(self):
+        print('Checking output folders', file=sys.stderr)
         folders = [self.outpath, self.trim_folder, self.count_folder, self.count_raw,
                          self.tRNA_raw, self.sample_folder, self.hisat_out, self.rRNA_tRNA_out,
                         self.bowtie_out, self.combined_out, self.tRNA_out, self.rRNA_out]
-        mf = map(makeFolder, folders)
+        mf = deque(map(makeFolder, folders))
         if self.rmsk:
             makeFolder(self.repeat_out)
             makeFolder(self.count_rmsk)
 
 
     def trimming(self):
+        ''' atropos detected:
+            read1: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC
+            read2: GATCGTCGGACTGTAGAACTCTGAACGTGTAGATCTCGGTGGTCGCCGTATCATT
+        '''
         R2R = 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
         R1R = 'GATCGTCGGACTGTAGAACTCTGAACGTGTAGA'
-        R2 = 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTN'
+        R2 = 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT'
         if self.TTN:
                 option='-U 1'
                 R2R = 'A' + R2R 
-                R2 = R2.replace('TCTN','TCTTN')
+                R2 = re.sub('TCT$','TCTT',R2)
         else:
                 option = ''
         R2_frac = R2[-14:]
@@ -99,9 +106,13 @@ class sample_object():
 
 
         single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
-        paired_end_adaptor = single_end_adaptor + '-A {R1R} '.format(R1R=R1R)
+        paired_end_adaptor = single_end_adaptor + \
+                '-A {R1R} '.format(R1R=R1R)
         shared_options = '--minimum-length=15 --threads={threads} '.format(threads=self.threads)
-        if self.trim_hard:
+        if not self.trim_hard:
+            shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20 --aligner insert '
+
+        else:
             '''
                 -B anywhere 
                 -G front 
@@ -113,12 +124,11 @@ class sample_object():
             if not self.single_end:
                 shared_options += '-G {R2R} -B {R2R_frac} '.format(R2R=R2R, R2R_frac=R2R_frac) 
 
-        else:
-            shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20 '
 
         if self.UMI == 0:
             if not self.single_end:
-                command = 'atropos trim {option} {adaptors} {shared_options} -o {trimed1} -p {trimed2} -pe1 {file1} -pe2 {file2}'\
+                command = 'atropos trim {option} {adaptors} {shared_options} '\
+                        '-o {trimed1} -p {trimed2} -pe1 {file1} -pe2 {file2}'\
                         .format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options,
                                 trimed1=self.trimed1, trimed2=self.trimed2,
                                 file1= self.fastq1, file2= self.fastq2)
@@ -130,7 +140,8 @@ class sample_object():
         elif self.UMI > 0:
             command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '\
                         ' --barcodeCutOff=20 --out_file=- -r read1 ' \
-                    ' | atropos {option} {shared_options} {adaptors} --interleaved-input - --interleaved-output - --quiet '\
+                    ' | atropos trim {option} {shared_options} {adaptors} --interleaved-input - '\
+                    ' --interleaved-output - --quiet  --report-file /dev/stderr -f fastq '\
                     ' | deinterleave_fastq.py -i - -1 {trimed1} -2 {trimed2} '\
                     .format(file1= self.fastq1, 
                             file2= self.fastq2, 
@@ -214,7 +225,7 @@ class sample_object():
                             '--rna-strandness FR ' 
 
         # map reads
-        hisat2 = self.hisat2 + ' --dovetail' if self.hisat2 != 'hisat2' else self.hisat2
+        hisat2 = 'hisat2' # self.hisat2 + ' --dovetail' if self.hisat2 != 'hisat2' else self.hisat2
         command = '{hisat2} -p {threads} -k 10 --no-mixed --no-discordant --new-summary '\
                 '--known-splicesite-infile {splicesite} {splice_option} '\
                 '--novel-splicesite-outfile {hisat_out}/novelsite.txt -x {ref} {input}'\
@@ -719,10 +730,10 @@ def makeFolder(folder):
     """
             Input a folder name and make a folder if it is non-existed
     """
-    sys.stderr.write('Creating %s....\n' %folder)
+    print('Creating %s....' %folder, file = sys.stderr)
     if os.path.isdir(folder):
-            sys.stderr.write('%s exists.\n' %folder)
+        print('%s exists.' %folder, file = sys.stderr)
     else:
-            os.mkdir(folder)
-            sys.stderr.write('Created %s.\n' %folder)
+        os.mkdir(folder)
+        print('Created %s.' %folder, file = sys.stderr)
     return 0

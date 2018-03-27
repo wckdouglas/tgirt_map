@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import pandas as pd
 import re
 import numpy as np
@@ -31,7 +32,7 @@ def read_tRNA(count_file_name):
 
 
 def readSample(count_file_path, tRNA_count_path, sample_id):    
-    print 'Running %s' %sample_id
+    print('Running %s' %sample_id)
     df = readDF(count_file_path + '/' + sample_id + '.counts') 
     tRNA_df = read_tRNA(tRNA_count_path + '/' + sample_id + '.tRNA')
     df = pd.concat([df, tRNA_df],axis=0) \
@@ -60,7 +61,7 @@ def main():
     df.iloc[:,4:] = df.iloc[:,4:].astype(int)
     tablename = project_path + '/Counts/combined_gene_count.tsv'
     df.to_csv(tablename, sep='\t', index=False)
-    print 'Written %s' %tablename
+    print('Written %s' %tablename)
 
 
 if __name__ == '__main__':

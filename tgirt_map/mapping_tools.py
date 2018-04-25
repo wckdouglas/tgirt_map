@@ -171,7 +171,7 @@ class sample_object():
             tRNA_extract = '| bamToFastq -fq {TRNA_FASTQ1} -i -'.format(TRNA_FASTQ1=self.tRNA_fastq1)
             unmap_extract = '| bamToFastq -fq {PREMAP_FASTQ1} -i - '.format(PREMAP_FASTQ1=self.premap_fastq1)
 
-        command =  'bowtie2 -p {threads} --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
+        command =  'bowtie2 -p {threads} --local --score-min G,1,10 -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
                 '--no-mixed --norc --no-discordant --dovetail ' \
                 '-x {tRNA_rRNA_index} {input}'\
                 '| samtools view -bS@{threads} - '\
@@ -267,7 +267,7 @@ class sample_object():
 
 
         # map reads
-        command = 'bowtie2 --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 -p {threads} -k 10 '\
+        command = 'bowtie2 --local --score-min G,1,10  -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 -p {threads} -k 10 '\
                 '--no-mixed --dovetail --no-discordant -x {index} {input} '\
                 '| samtools view -@{threads} -bS - > {bowtie_out}/bowtie2.bam'\
                 .format(threads=self.threads, 
@@ -482,7 +482,7 @@ class sample_object():
 
             _input = '-U {tRNA_path}/tRNA.1.fq.gz'.format(tRNA_path=self.tRNA_out)
 
-        command = 'bowtie2 -p {threads} --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
+        command = 'bowtie2 -p {threads} --score-min G,1,10 --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
                         '--norc --dovetail --no-mixed --no-discordant -x {tRNA_index} {input}'\
                         '| samtools view -bS@ {threads} - > {tRNA_path}/tRNA_remap.bam'\
                         .format(threads=self.threads,
@@ -574,7 +574,7 @@ class sample_object():
 
             _input = '-U {rRNA_path}/rRNA.1.fq.gz'.format(rRNA_path=self.rRNA_out)
 
-        command = 'bowtie2 -p {threads} --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
+        command = 'bowtie2 -p {threads} --score-min G,1,10 --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
                 '--no-mixed --dovetail --no-discordant -x {rRNA_index} {input}'\
                 '| samtools view -bS@ {threads} - > {rRNA_path}/rRNA_remap.bam'\
                     .format(threads=self.threads,
@@ -671,7 +671,7 @@ class sample_object():
             self.run_process(command)
             _option=' -U '
 
-        command = 'bowtie2 -p {threads} --very-sensitive-local -k10 -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
+        command = 'bowtie2 -p {threads} --very-sensitive-local --score-min G,1,10 -k10 -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
                         '--dovetail --no-mixed --no-discordant -x {repeat_index} '\
                         ' {option} {repeat_path}/repeats.fq'\
                         '| samtools view -bS@ {threads} - > {repeat_path}/repeat_remap.bam'\

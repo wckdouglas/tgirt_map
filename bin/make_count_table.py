@@ -26,8 +26,8 @@ def read_tRNA(count_file_name):
                                         d.id.str.extract('(MT-.*)', expand=False))) \
         .assign(name = lambda d: d.name.str.replace('^Homo_sapiens_|-[0-9]+$',''))\
         .assign(name = lambda d: d.name.str.replace('-[0-9]+$','')) \
-        .assign(name = lambda d: d.name.str.replace('-[0-9]+$',''))   
-
+        .assign(name = lambda d: d.name.str.replace('-[0-9]+$',''))  \
+        .assign(name = lambda d: np.where(pd.isnull(d.name), d.id, d.name))
     return df
 
 
@@ -51,14 +51,13 @@ def main():
     dfFunc = partial(readSample, count_file_path, tRNA_count_path)
     dfs = Pool(12).map(dfFunc, sample_ids)
     df = pd.concat(dfs, axis=0) \
-        .query('sample_name != "try"') \
         .assign(count = lambda d: d['count'].astype(int)) \
-        .pipe(pd.pivot_table,index = ['id','grouped_type','type','name'],  
-            values = 'count' , columns = ['sample_name'],
+        .pipe(pd.pivot_table,
+            index = ['id','grouped_type','type','name'],  
+            values = 'count' , 
+            columns = ['sample_name'],
             fill_value=0) \
-        .reset_index() \
-        .pipe(lambda d: d[~d.type.str.contains('ERCC')])
-    df.iloc[:,4:] = df.iloc[:,4:].astype(int)
+        .reset_index() 
     tablename = project_path + '/Counts/combined_gene_count.tsv'
     df.to_csv(tablename, sep='\t', index=False)
     print('Written %s' %tablename)

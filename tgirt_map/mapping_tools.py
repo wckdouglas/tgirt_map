@@ -110,7 +110,7 @@ class sample_object():
                 '-A {R1R} '.format(R1R=R1R)
         shared_options = '--minimum-length=15 --threads={threads} '.format(threads=self.threads)
         if not self.trim_hard:
-            shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20 --aligner insert '
+            shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20  '
 
         else:
             '''
@@ -127,7 +127,7 @@ class sample_object():
 
         if self.UMI == 0:
             if not self.single_end:
-                command = 'atropos trim {option} {adaptors} {shared_options} '\
+                command = 'atropos trim {option} {adaptors} {shared_options} --aligner insert '\
                         '-o {trimed1} -p {trimed2} -pe1 {file1} -pe2 {file2}'\
                         .format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options,
                                 trimed1=self.trimed1, trimed2=self.trimed2,
@@ -140,7 +140,7 @@ class sample_object():
         elif self.UMI > 0:
             command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '\
                         ' --barcodeCutOff=20 --out_file=- -r read1 ' \
-                    ' | atropos trim {option} {shared_options} {adaptors} --interleaved-input - '\
+                    ' | atropos trim {option} {shared_options} {adaptors} --aligner insert  --interleaved-input - '\
                     ' --interleaved-output - --quiet  --report-file /dev/stderr -f fastq '\
                     ' | deinterleave_fastq.py -i - -1 {trimed1} -2 {trimed2} '\
                     .format(file1= self.fastq1, 

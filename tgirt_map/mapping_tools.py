@@ -119,10 +119,10 @@ class sample_object():
                 -A adapter
             '''
             shared_options += '--overlap 3 --nextseq-trim=25 --times=2 --max-n=3 '\
-                            '--error-rate=0.2 --front={R2} --anywhere={R2_frac} '\
-                            .format(R2 = R2, R2_frac=R2_frac) 
+                            '--error-rate=0.2 --front={R2R} --anywhere={R2R_frac} '\
+                            .format(R2R = R2R, R2_frac=R2R_frac) 
             if not self.single_end:
-                shared_options += '-G {R2R} -B {R2R_frac} '.format(R2R=R2R, R2R_frac=R2R_frac) 
+                shared_options += '-G {R2} -B {R2_frac} '.format(R2=R2, R2_frac=R2_frac) 
 
 
         if self.UMI == 0:

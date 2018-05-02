@@ -101,8 +101,15 @@ class sample_object():
                 R2 = re.sub('TCT$','TCTT',R2)
         else:
                 option = ''
-        R2_frac = R2[-14:]
-        R2R_frac = R2R[:14]
+
+        #if R2R jumps to R2 RNA, template switch byproduct
+        fwd_byproduct = R2[-14:]        
+        rvs_byproduct = R2R[:14] 
+
+        
+        #if R2R jimps to R2R
+        fwd_byproduct += ' -b GCACACGTCTGAACTCCAGTCAC'
+        rvs_byproduct += ' -B GTGACTGGAGTTCAGACGTGTGC'
 
 
         single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
@@ -119,10 +126,11 @@ class sample_object():
                 -A adapter
             '''
             shared_options += '--overlap 3 --nextseq-trim=25 --times=2 --max-n=3 '\
-                            '--error-rate=0.2 --front={R2R} --anywhere={R2R_frac} '\
-                            .format(R2R = R2R, R2_frac=R2R_frac) 
+                            '--error-rate=0.2 --front={front_adapter} --anywhere={anywhere_adapter} '\
+                            .format(front_adapter = R2R, anywhere_adapter = fwd_byproduct) 
             if not self.single_end:
-                shared_options += '-G {R2} -B {R2_frac} '.format(R2=R2, R2_frac=R2_frac) 
+                shared_options += '-G {front_adapter} -B {anywhere_adapter} '\
+                                    .format(front_adapter = R2, anywhere_adapter = rvs_byproduct) 
 
 
         if self.UMI == 0:

@@ -32,6 +32,7 @@ class sample_object():
         self.dry = args.dry
         self.count_all = args.count_all
         self.novel_splice = args.novel_splice
+        self.polyA = args.polyA
 
         self.single_end = not self.fastq2
         if self.single_end and self.UMI > 0:
@@ -111,6 +112,9 @@ class sample_object():
         fwd_byproduct += ' -b GCACACGTCTGAACTCCAGTCAC'
         rvs_byproduct += ' -B GTGACTGGAGTTCAGACGTGTGC'
 
+        if self.polyA:
+            fwd_byproduct += '-b A{10} -b T{10}'
+            rvs_byproduct += '-B A{10} -B T{10}'
 
         single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
         paired_end_adaptor = single_end_adaptor + \

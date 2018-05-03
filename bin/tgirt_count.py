@@ -46,6 +46,8 @@ def getopt():
               help = 'Tweak hisat2 to enable more novel splicings')
     parser.add_argument('--trim_aggressive', action='store_true',  
               help = 'trim all R2R to R2R junction')
+    parser.add_argument('--polyA', action='store_true',  
+              help = 'trim for polyA/T')
     parser.add_argument('--umi', default=0, type=int,
               help = "Number of UMI bases from 5' of R1 (default = 0)")
     parser.add_argument('--count_all', action='store_true',

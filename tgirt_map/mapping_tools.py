@@ -6,7 +6,6 @@ import time
 from collections import defaultdict, deque
 from functools import partial
 from builtins import map, range
-from sequencing_tools.fastq_tools import reverse_complement
 import re
 import six
 

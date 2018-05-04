@@ -6,6 +6,7 @@ import time
 from collections import defaultdict, deque
 from functools import partial
 from builtins import map, range
+from sequencing_tools.fastq_tools import reverse_complement
 import re
 import six
 
@@ -113,8 +114,13 @@ class sample_object():
         rvs_byproduct += ' -B GTGACTGGAGTTCAGACGTGTGC'
 
         if self.polyA:
-            fwd_byproduct += ' -a A{10} -a T{10}'
-            rvs_byproduct += ' -A A{10} -A T{10}'
+            smart_seq_CDS = 'AAGCAGTGGTATCAACGCAGAGTAC'
+            switch_oligo = 'AGTGGTATCAACGCAGAGTACGGGG'
+
+            long_primers = ' -a A{10} -a T{10} -g %s -g %s ' %( smart_seq_CDS, switch_oligo)
+
+            fwd_byproduct += long_primers
+            rvs_byproduct += long_primers
 
         single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
         paired_end_adaptor = single_end_adaptor + \

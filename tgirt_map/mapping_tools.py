@@ -116,10 +116,9 @@ class sample_object():
             smart_seq_CDS = 'AAGCAGTGGTATCAACGCAGAGTAC'
             switch_oligo = 'AGTGGTATCAACGCAGAGTACGGGG'
 
-            long_primers = ' -a A{10} -a T{10} -g %s -g %s ' %( smart_seq_CDS, switch_oligo)
+            fwd_byproduct += ' -a A{10} -a T{10} -g %s -g %s ' %( smart_seq_CDS, switch_oligo)
+            rvs_byproduct += ' -A A{10} -A T{10} -G %s -G %s ' %( smart_seq_CDS, switch_oligo)
 
-            fwd_byproduct += long_primers
-            rvs_byproduct += long_primers
 
         single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
         paired_end_adaptor = single_end_adaptor + \

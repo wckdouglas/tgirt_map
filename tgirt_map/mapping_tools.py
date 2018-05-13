@@ -135,9 +135,10 @@ class sample_object():
             '''
             shared_options += '--overlap 3 --nextseq-trim=25 --times=2 --max-n=3 '\
                             '--error-rate=0.2 --front={front_adapter} --anywhere={anywhere_adapter} '\
+                            ' -a A{10} '\
                             .format(front_adapter = R2R, anywhere_adapter = fwd_byproduct) 
             if not self.single_end:
-                shared_options += '-G {front_adapter} -B {anywhere_adapter} '\
+                shared_options += '-G {front_adapter} -B {anywhere_adapter} -G T{10} '\
                                     .format(front_adapter = R2, anywhere_adapter = rvs_byproduct) 
 
 

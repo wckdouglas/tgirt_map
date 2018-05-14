@@ -89,35 +89,40 @@ class sample_object():
 
 
     def trimming(self):
-        ''' atropos detected:
+        ''' 
+        atropos detected:
             read1: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC
             read2: GATCGTCGGACTGTAGAACTCTGAACGTGTAGATCTCGGTGGTCGCCGTATCATT
+            
+        Include barcode and P5/P7:
+            read1: AGATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTTG
+            read2: GATCGTCGGACTGTAGAACTCTGAACGTGTAGATCTCGGTGGTCGCCGTATCATT
         '''
-        R2R = 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'
+        R2R = 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTTG'
         R1R = 'GATCGTCGGACTGTAGAACTCTGAACGTGTAGA'
         R2 = 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT'
         if self.TTN:
-                option='-U 1'
-                R2R = 'A' + R2R 
-                R2 = re.sub('TCT$','TCTT',R2)
+            option='-U 1'
+            R2R = 'A' + R2R 
+            R2 = re.sub('TCT$','TCTT',R2)
         else:
-                option = ''
+            option = ''
 
         #if R2R jumps to R2 RNA, template switch byproduct
-        fwd_byproduct = R2[-14:]        
-        rvs_byproduct = R2R[:14] 
+        fwd_byproduct = R2[-14:]
+        rvs_byproduct = R2R[:14]
 
         
-        #if R2R jimps to R2R
-        fwd_byproduct += ' -b GCACACGTCTGAACTCCAGTCAC'
-        rvs_byproduct += ' -B GTGACTGGAGTTCAGACGTGTGC'
+        #if R2R jimps to R2 RNA or R2R DNA
+        fwd_byproduct += ' -b GCACACGTCTGAACTCCAGTCAC -b {R2} '.format(R2 = R2)
+        rvs_byproduct += ' -B GTGACTGGAGTTCAGACGTGTGC -b {R2R} '.format(R2R = R2R)
 
         if self.polyA:
             smart_seq_CDS = 'AAGCAGTGGTATCAACGCAGAGTAC'
             switch_oligo = 'AGTGGTATCAACGCAGAGTACGGGG'
 
-            fwd_byproduct += ' -a A{10} -a T{10} -g %s -g %s ' %( smart_seq_CDS, switch_oligo)
-            rvs_byproduct += ' -A A{10} -A T{10} -G %s -G %s ' %( smart_seq_CDS, switch_oligo)
+            fwd_byproduct += ' -a A{100} -a T{100} -g %s -g %s ' %( smart_seq_CDS, switch_oligo)
+            rvs_byproduct += ' -A A{100} -A T{100} -G %s -G %s ' %( smart_seq_CDS, switch_oligo)
 
 
         single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
@@ -135,11 +140,12 @@ class sample_object():
             '''
             shared_options += '--overlap 3 --nextseq-trim=25 --times=2 --max-n=3 '\
                             '--error-rate=0.2 --front={front_adapter} --anywhere={anywhere_adapter} '\
-                            ' -a A{10} '\
-                            .format(front_adapter = R2R, anywhere_adapter = fwd_byproduct) 
+                            .format(front_adapter = R2R, anywhere_adapter = fwd_byproduct) +\
+                            ' -a A{100} '
             if not self.single_end:
-                shared_options += '-G {front_adapter} -B {anywhere_adapter} -G T{10} '\
-                                    .format(front_adapter = R2, anywhere_adapter = rvs_byproduct) 
+                shared_options += '-G {front_adapter} -B {anywhere_adapter} '\
+                                    .format(front_adapter = R2, anywhere_adapter = rvs_byproduct) +\
+                                ' -G T{100} '
 
 
         if self.UMI == 0:

@@ -128,7 +128,7 @@ class sample_object():
         single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
         paired_end_adaptor = single_end_adaptor + \
                 '-A {R1R} '.format(R1R=R1R)
-        shared_options = '--minimum-length=15 --threads={threads} '.format(threads=self.threads)
+        shared_options = '--minimum-length=15 --threads={threads} --no-cache-adapters '.format(threads=self.threads)
         if not self.trim_hard:
             shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20  --aligner insert '
 
@@ -195,7 +195,7 @@ class sample_object():
             unmap_extract = '| bamToFastq -fq {PREMAP_FASTQ1} -i - '.format(PREMAP_FASTQ1=self.premap_fastq1)
 
         command =  'bowtie2 -p {threads} --local --score-min G,1,10 -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
-                '--no-mixed --norc --no-discordant --dovetail ' \
+                '--no-mixed --no-discordant --dovetail ' \
                 '-x {tRNA_rRNA_index} {input}'\
                 '| samtools view -bS@{threads} - '\
                 '> {rRNA_tRNA_out}/tRNA_rRNA.bam'\

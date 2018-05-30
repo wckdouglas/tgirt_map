@@ -141,11 +141,11 @@ class sample_object():
             shared_options += '--overlap 3 --nextseq-trim=25 --times=2 --max-n=3 '\
                             '--error-rate=0.2 --front={front_adapter} --anywhere={anywhere_adapter} '\
                             .format(front_adapter = R2R, anywhere_adapter = fwd_byproduct) +\
-                            ' -a A{100} '
+                            ' -a A{100} -a T{100} '
             if not self.single_end:
                 shared_options += '-G {front_adapter} -B {anywhere_adapter} '\
                                     .format(front_adapter = R2, anywhere_adapter = rvs_byproduct) +\
-                                ' -G T{100} '
+                                ' -G T{100} -G A{100} '
 
 
         if self.UMI == 0:

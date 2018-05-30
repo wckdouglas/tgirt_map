@@ -145,7 +145,7 @@ class sample_object():
             if not self.single_end:
                 shared_options += '-G {front_adapter} -B {anywhere_adapter} '\
                                     .format(front_adapter = R2, anywhere_adapter = rvs_byproduct) +\
-                                ' -G T{100} -G A{100} '
+                                ' -A T{100} -A A{100} '
 
 
         if self.UMI == 0:

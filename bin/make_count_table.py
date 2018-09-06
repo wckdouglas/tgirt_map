@@ -56,6 +56,7 @@ def main():
             index = ['id','grouped_type','type','name'],  
             values = 'count' , 
             columns = ['sample_name'],
+            aggfunc = 'sum',
             fill_value=0) \
         .reset_index() 
     tablename = project_path + '/Counts/combined_gene_count.tsv'

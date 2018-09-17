@@ -81,7 +81,7 @@ class sample_object():
 
     def make_result_dir(self):
         print('Checking output folders', file=sys.stderr)
-        folders = [self.outpath, self.trim_folder, self.count_folder, self.count_raw,
+        folders = [self.outpath, self.trim_folder, self.count_folder, self.count_raw, self.univec_contaminants,
                          self.tRNA_raw, self.sample_folder, self.hisat_out, self.rRNA_tRNA_out,
                         self.bowtie_out, self.combined_out, self.tRNA_out, self.rRNA_out]
         mf = deque(map(makeFolder, folders))
@@ -180,8 +180,8 @@ class sample_object():
 
 
     def univec_filter(self):
-        self.filtered_fq1 = '{contamination_path}/filtered.1.fq'
-        self.filtered_fq2 = '{contamination_path}/filtered.2.fq'
+        self.filtered_fq1 = self.univec_contaminants + '/filtered.1.fq'
+        self.filtered_fq2 = self.univec_contaminants + '/filtered.2.fq'
         _input = '-1 {trimmed1} -2 {trimmed2}'.format(trimmed1 = self.trimed1, trimmed2 = self.trimed2)
         command = 'bowtie2 ' \
                 '-L 8 -i S,1,0.50 --local '\
@@ -197,7 +197,7 @@ class sample_object():
         self.run_process(command)
 
         command = 'samtools view -bf4 {contamination_path}/univec.bam' \
-                    '| bamToFastq -fq {filtered_fq1} -fq2 {filtered_fq2}'\
+                    '| bamToFastq -i - -fq {filtered_fq1} -fq2 {filtered_fq2}'\
                     .format(contamination_path = self.univec_contaminants,
                             filtered_fq1 = self.filtered_fq1, 
                             filtered_fq2 = self.filtered_fq2)
@@ -406,9 +406,6 @@ class sample_object():
             _verb = 'intersect'
             _option = '-v'
 
-        filtered_bed = '{bed_path}/tRNA_comprehensive.bed'
-        if not os.path.isfile( filtered_bed):
-           filtered_bed = filtered_bed.replace('_comprehensive','') 
         ### filter out tRNA
         command = 'bedtools {verb} -s -f 0.01 -abam {combined_path}/primary.bam'\
                     ' -b {bed_path}/tRNA.bed '\
@@ -714,7 +711,7 @@ class sample_object():
                                 combined_path =self.combined_out, 
                                 threads = self.threads)
             self.run_process(command)
-            fq_input = ' -1 {repeat_path}/repeats_1.fq.gz -2 {repeat_path]/repeats_2.fq.gz '\
+            fq_input = ' -1 {repeat_path}/repeats_1.fq.gz -2 {repeat_path}/repeats_2.fq.gz '\
                         .format(repeat_path = self.repeat_out)
 
         else:

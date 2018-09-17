@@ -1,4 +1,3 @@
-
 #!/bin/env  python
 # This is the pair-end pipeline for tgirt sequencing
 # Mapping with hisat + bowtie local
@@ -95,11 +94,9 @@ def main():
         process_sample.trimming()
 
     if args.univec and args.fastq2:
-        if not skip_univec:
+        if not args.skip_univec:
             process_sample.univec_filter()
         process_sample.trimed1, process_sample.trimed2 = process_sample.filtered_fq1, process_sample.filtered_fq2
-
-
 
     if not args.skip_premap:
         process_sample.premap_tRNA_rRNA()

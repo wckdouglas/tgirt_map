@@ -20,7 +20,7 @@ def readDF(count_file_name):
 
 def read_tRNA(count_file_name):
     df = pd.read_table(count_file_name, names= ['id','count'])  \
-        .assign(type = 'tRNA') \
+            .assign(type = lambda d: np.where(d.id.str.contains('RNY'),'Y_RNA','tRNA')) \
         .assign(name = lambda d: np.where(d.id.str.contains('tRNA'),
                                         d.id.str.extract('(tRNA-[A-Za-z]{3,5}-[ACTGN]{3})', expand=False),
                                         d.id.str.extract('(MT-.*)', expand=False))) \
@@ -35,7 +35,7 @@ def readSample(count_file_path, tRNA_count_path, sample_id):
     print('Running %s' %sample_id)
     df = readDF(count_file_path + '/' + sample_id + '.counts') 
     tRNA_df = read_tRNA(tRNA_count_path + '/' + sample_id + '.tRNA')
-    df = pd.concat([df, tRNA_df],axis=0) \
+    df = pd.concat([df, tRNA_df],axis=0, sort=True) \
         .assign(sample_name = sample_id.replace('-','_'))  \
         .assign(grouped_type = lambda d: d.type.map(change_gene_type))
     return df
@@ -50,12 +50,13 @@ def main():
     sample_ids = set(map(lambda x: x.split('/')[-1].split('.')[0], count_files))
     dfFunc = partial(readSample, count_file_path, tRNA_count_path)
     dfs = Pool(12).map(dfFunc, sample_ids)
-    df = pd.concat(dfs, axis=0) \
+    df = pd.concat(dfs, axis=0, sort=True) \
         .assign(count = lambda d: d['count'].astype(int)) \
         .pipe(pd.pivot_table,
             index = ['id','grouped_type','type','name'],  
             values = 'count' , 
             columns = ['sample_name'],
+            aggfunc = 'sum',
             fill_value=0) \
         .reset_index() 
     tablename = project_path + '/Counts/combined_gene_count.tsv'

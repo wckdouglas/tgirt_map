@@ -406,6 +406,9 @@ class sample_object():
             _verb = 'intersect'
             _option = '-v'
 
+        filtered_bed = '{bed_path}/tRNA_comprehensive.bed'
+        if not os.path.isfile( filtered_bed):
+           filtered_bed = filtered_bed.replace('_comprehensive','') 
         ### filter out tRNA
         command = 'bedtools {verb} -s -f 0.01 -abam {combined_path}/primary.bam'\
                     ' -b {bed_path}/tRNA.bed '\

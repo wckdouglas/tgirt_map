@@ -33,6 +33,7 @@ class sample_object():
         self.count_all = args.count_all
         self.novel_splice = args.novel_splice
         self.polyA = args.polyA
+        self.univec_index = args.univec
 
         self.single_end = not self.fastq2
         if self.single_end and self.UMI > 0:
@@ -55,6 +56,7 @@ class sample_object():
         self.tRNA_out = self.sample_folder + '/tRNA'
         self.rRNA_out = self.sample_folder + '/rRNA'
         self.repeat_out = self.sample_folder + '/repeats'
+        self.univec_contaminants = self.sample_folder + '/UniVec'
 
         #make output file names
         self.trimed1= '%s/%s.1.fq.gz' %(self.trim_folder, self.samplename)
@@ -176,6 +178,31 @@ class sample_object():
                             trimed2=self.trimed2)
         self.run_process(command)
 
+
+    def univec_filter(self):
+        self.filtered_fq1 = '{contamination_path}/filtered.1.fq'
+        self.filtered_fq2 = '{contamination_path}/filtered.2.fq'
+        _input = '-1 {trimmed1} -2 {trimmed2}'.format(trimmed1 = self.trimed1, trimmed2 = self.trimed2)
+        command = 'bowtie2 ' \
+                '-L 8 -i S,1,0.50 --local '\
+                '--no-mixed --no-discordant --dovetail ' \
+                '-x {univec} {input}'\
+                '| samtools view -bS@{threads} - '\
+                '> {contamination_path}/univec.bam' \
+                .format(univec = self.univec_index,
+                        contamination_path = self.univec_contaminants, 
+                        threads = self.threads,
+                        input = _input)
+
+        self.run_process(command)
+
+        command = 'samtools view -bf4 {contamination_path}/univec.bam' \
+                    '| bamToFastq -fq {filtered_fq1} -fq2 {filtered_fq2}'\
+                    .format(contamination_path = self.univec_contaminants,
+                            filtered_fq1 = self.filtered_fq1, 
+                            filtered_fq2 = self.filtered_fq2)
+        self.run_process(command)
+
     def premap_tRNA_rRNA(self):
         '''
         premapping to tRNA and rRNA and make fastq files
@@ -194,7 +221,8 @@ class sample_object():
             tRNA_extract = '| bamToFastq -fq {TRNA_FASTQ1} -i -'.format(TRNA_FASTQ1=self.tRNA_fastq1)
             unmap_extract = '| bamToFastq -fq {PREMAP_FASTQ1} -i - '.format(PREMAP_FASTQ1=self.premap_fastq1)
 
-        command =  'bowtie2 -p {threads} --local --score-min G,1,10 -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
+        command =  'bowtie2 -p {threads} --local -D 20 -R 3 -N 0 '\
+                '-L 8 -i S,1,0.50 '\
                 '--no-mixed --no-discordant --dovetail ' \
                 '-x {tRNA_rRNA_index} {input}'\
                 '| samtools view -bS@{threads} - '\
@@ -290,7 +318,7 @@ class sample_object():
 
 
         # map reads
-        command = 'bowtie2 --local --score-min G,1,10  -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 -p {threads} -k 10 '\
+        command = 'bowtie2 --local  -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 -p {threads} -k 10 '\
                 '--no-mixed --dovetail --no-discordant -x {index} {input} '\
                 '| samtools view -@{threads} -bS - > {bowtie_out}/bowtie2.bam'\
                 .format(threads=self.threads, 
@@ -301,9 +329,9 @@ class sample_object():
 
         # split to uniq and multimap
         command = 'split_uniq_bam.py '\
-                        '-i {bowtie_out}/bowtie2.bam '\
-                        '-o {bowtie_out}/bowtie '\
-                        '-a bowtie2 {option}'\
+                '-i {bowtie_out}/bowtie2.bam '\
+                '-o {bowtie_out}/bowtie '\
+                '-a bowtie2 {option}'\
                 .format(bowtie_out=self.bowtie_out, option=_split_option)
         self.run_process(command)
 
@@ -505,13 +533,13 @@ class sample_object():
 
             _input = '-U {tRNA_path}/tRNA.1.fq.gz'.format(tRNA_path=self.tRNA_out)
 
-        command = 'bowtie2 -p {threads} --score-min G,1,10 --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
-                        '--norc --dovetail --no-mixed --no-discordant -x {tRNA_index} {input}'\
-                        '| samtools view -bS@ {threads} - > {tRNA_path}/tRNA_remap.bam'\
-                        .format(threads=self.threads,
-                                tRNA_index=self.tRNA_index, 
-                                input=_input,
-                                tRNA_path=self.tRNA_out)
+        command = 'bowtie2 -p {threads} --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
+                    '--norc --dovetail --no-mixed --no-discordant -x {tRNA_index} {input}'\
+                    '| samtools view -bS@ {threads} - > {tRNA_path}/tRNA_remap.bam'\
+                    .format(threads=self.threads,
+                            tRNA_index=self.tRNA_index, 
+                            input=_input,
+                            tRNA_path=self.tRNA_out)
         self.run_process(command)
 
         if self.UMI > 0 and not self.count_all:
@@ -597,13 +625,13 @@ class sample_object():
 
             _input = '-U {rRNA_path}/rRNA.1.fq.gz'.format(rRNA_path=self.rRNA_out)
 
-        command = 'bowtie2 -p {threads} --score-min G,1,10 --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
+        command = 'bowtie2 -p {threads} --local -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
                 '--no-mixed --dovetail --no-discordant -x {rRNA_index} {input}'\
                 '| samtools view -bS@ {threads} - > {rRNA_path}/rRNA_remap.bam'\
-                    .format(threads=self.threads,
-                            rRNA_index=self.rRNA_index, 
-                            input=_input,
-                            rRNA_path=self.rRNA_out) 
+                .format(threads=self.threads,
+                        rRNA_index=self.rRNA_index, 
+                        input=_input,
+                        rRNA_path=self.rRNA_out) 
         self.run_process(command)
 
         if self.UMI > 0 and not self.count_all:
@@ -678,29 +706,32 @@ class sample_object():
         # repeat reads process
         if not self.single_end:
             command = 'samtools fastq -N@ {threads} {combined_path}/repeats.bam '\
-                    '> {repeat_path}/repeats.fq'\
+                    '-1 {repeat_path}/repeats_1.fq.gz -2 {repeat_path}/reapeats_2.fq.gz'\
                         .format(repeat_path=self.repeat_out,
                                 combined_path =self.combined_out, 
                                 threads = self.threads)
             self.run_process(command)
-            _option=' --interleaved '
+            fq_input = ' -1 {repeat_path}/repeats_1.fq.gz -2 {repeat_path]/repeats_2.fq.gz '\
+                        .format(repeat_path = self.repeat_out)
 
         else:
             command = 'samtools fastq -@ {threads} {combined_path}/repeats.bam '\
-                '> {repeat_path}/repeats.fq'\
+                '> {repeat_path}/repeats.fq.gz'\
                 .format(repeat_path=self.repeat_out,
                         combined_path =self.combined_out, 
                         threds=self.threds)  
             self.run_process(command)
-            _option=' -U '
+            fq_input = ' -U {repeat_path}/repeats.fq.gz'\
+                        .format(repeat_path = self.repeat_out)
 
-        command = 'bowtie2 -p {threads} --very-sensitive-local --score-min G,1,10 -k10 -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
-                        '--dovetail --no-mixed --no-discordant -x {repeat_index} '\
-                        ' {option} {repeat_path}/repeats.fq'\
-                        '| samtools view -bS@ {threads} - > {repeat_path}/repeat_remap.bam'\
+        command = 'bowtie2 -p {threads} --very-sensitive-local ' \
+                '-k10 -D 20 -R 3 -N 0 -L 8 -i S,1,0.50 '\
+                '--dovetail --no-mixed --no-discordant -x {repeat_index} '\
+                ' {input} '\
+                '| samtools view -bS@ {threads} - > {repeat_path}/repeat_remap.bam'\
                 .format(threads=self.threads,
                         repeat_index=self.rmsk_index,
-                        option=_option, 
+                        fq_input = fq_input, 
                         repeat_path=self.repeat_out)
         self.run_process(command)
 

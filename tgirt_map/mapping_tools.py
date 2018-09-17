@@ -81,9 +81,10 @@ class sample_object():
 
     def make_result_dir(self):
         print('Checking output folders', file=sys.stderr)
-        folders = [self.outpath, self.trim_folder, self.count_folder, self.count_raw, self.univec_contaminants,
+        folders = [self.outpath, self.trim_folder, self.count_folder, self.count_raw,
                          self.tRNA_raw, self.sample_folder, self.hisat_out, self.rRNA_tRNA_out,
-                        self.bowtie_out, self.combined_out, self.tRNA_out, self.rRNA_out]
+                        self.bowtie_out, self.combined_out, self.tRNA_out, 
+                        self.rRNA_out, self.univec_contaminants]
         mf = deque(map(makeFolder, folders))
         if self.rmsk:
             makeFolder(self.repeat_out)

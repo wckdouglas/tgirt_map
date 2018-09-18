@@ -732,7 +732,7 @@ class sample_object():
                 '| samtools view -bS@ {threads} - > {repeat_path}/repeat_remap.bam'\
                 .format(threads=self.threads,
                         repeat_index=self.rmsk_index,
-                        fq_input = fq_input, 
+                        input = fq_input, 
                         repeat_path=self.repeat_out)
         self.run_process(command)
 

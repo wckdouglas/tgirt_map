@@ -33,7 +33,8 @@ class sample_object():
         self.count_all = args.count_all
         self.novel_splice = args.novel_splice
         self.polyA = args.polyA
-        self.univec_index = args.univec
+        self.univec_index = args.univec_index
+        self.smRNA_index = args.smRNA_index
 
         self.single_end = not self.fastq2
         if self.single_end and self.UMI > 0:
@@ -57,6 +58,7 @@ class sample_object():
         self.rRNA_out = self.sample_folder + '/rRNA'
         self.repeat_out = self.sample_folder + '/repeats'
         self.univec_contaminants = self.sample_folder + '/UniVec'
+        self.smRNA_out = self.sample_folder + '/smallRNA'
 
         #make output file names
         self.trimed1= '%s/%s.1.fq.gz' %(self.trim_folder, self.samplename)
@@ -83,7 +85,7 @@ class sample_object():
         print('Checking output folders', file=sys.stderr)
         folders = [self.outpath, self.trim_folder, self.count_folder, self.count_raw,
                          self.tRNA_raw, self.sample_folder, self.hisat_out, self.rRNA_tRNA_out,
-                        self.bowtie_out, self.combined_out, self.tRNA_out, 
+                        self.bowtie_out, self.combined_out, self.tRNA_out, self.smRNA_out,
                         self.rRNA_out, self.univec_contaminants]
         mf = deque(map(makeFolder, folders))
         if self.rmsk:
@@ -190,19 +192,38 @@ class sample_object():
                 '-x {univec} {input}'\
                 '| samtools view -bS@{threads} - '\
                 '> {contamination_path}/univec.bam' \
-                .format(univec = self.univec_index,
-                        contamination_path = self.univec_contaminants, 
+                '; samtools view -bf4 {contamination_path}/univec.bam' \
+                '| bamToFastq -i - -fq {filtered_fq1} -fq2 {filtered_fq2}'\
+                .format(contamination_path = self.univec_contaminants,
+                        filtered_fq1 = self.filtered_fq1, 
+                        filtered_fq2 = self.filtered_fq2,
+                        univec = self.univec_index,
                         threads = self.threads,
                         input = _input)
 
         self.run_process(command)
 
-        command = 'samtools view -bf4 {contamination_path}/univec.bam' \
-                    '| bamToFastq -i - -fq {filtered_fq1} -fq2 {filtered_fq2}'\
-                    .format(contamination_path = self.univec_contaminants,
-                            filtered_fq1 = self.filtered_fq1, 
-                            filtered_fq2 = self.filtered_fq2)
+
+    def smallRNA_filter(self):
+        self.filtered_fq1 = self.smRNA_out + '/filtered.1.fq'
+        self.filtered_fq2 = self.smRNA_out + '/filtered.2.fq'
+        _input = '-1 {trimmed1} -2 {trimmed2}'.format(trimmed1 = self.trimed1, trimmed2 = self.trimed2)
+        command = 'bowtie2 ' \
+                '-L 8 -i S,1,0.50 --local '\
+                '--no-mixed --no-discordant --dovetail ' \
+                '-x {smRNA_index} {input}'\
+                '| samtools view -bS@{threads} - '\
+                '> {small_out}/smallRNA.bam ' \
+                '; samtools view -bf4 {small_out}/smallRNA.bam' \
+                '| bamToFastq -i - -fq {filtered_fq1} -fq2 {filtered_fq2}' \
+                .format(smRNA_index = self.smRNA_index,
+                        small_out = self.smRNA_out, 
+                        threads = self.threads,
+                        input = _input,
+                        filtered_fq1 = self.filtered_fq1, 
+                        filtered_fq2 = self.filtered_fq2)
         self.run_process(command)
+
 
     def premap_tRNA_rRNA(self):
         '''

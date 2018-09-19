@@ -1,3 +1,4 @@
+
 #!/bin/env  python
 # This is the pair-end pipeline for tgirt sequencing
 # Mapping with hisat + bowtie local
@@ -28,8 +29,10 @@ def getopt():
               help = 'hisat2 index', required=True)
     parser.add_argument('-y', '--bowtie2_index', 
               help = 'bowtie2 index', required=True)
-    parser.add_argument('--univec', 
+    parser.add_argument('--univec_index', 
               help = 'bowtie2 index for univec sequences')
+    parser.add_argument('--smRNA_index', 
+              help = 'bowtie2 index for small RNA sequences')
     parser.add_argument('-b','--bedpath', 
               help = 'bed folder for gene counting', required=True)
     parser.add_argument('-s','--splicesite', 
@@ -63,6 +66,8 @@ def getopt():
               help = 'DEBUG: skip trimming')
     parser.add_argument('--skip_univec', action='store_true',  
               help = 'DEBUG: skip univec filter')
+    parser.add_argument('--skip_smRNA', action='store_true',  
+              help = 'DEBUG: skip smallRNA filter')
     parser.add_argument('--skip_premap', action='store_true',  
               help = 'DEBUG: skip premapping tRNA and rRNA')
     parser.add_argument('--skip_hisat', action='store_true',  
@@ -96,6 +101,11 @@ def main():
     if args.univec and args.fastq2:
         if not args.skip_univec:
             process_sample.univec_filter()
+        process_sample.trimed1, process_sample.trimed2 = process_sample.filtered_fq1, process_sample.filtered_fq2
+
+    if args.smRNA_index and args.fastq2:
+        if not args.skip_smRNA:
+            process_sample.smallRNA_filter()
         process_sample.trimed1, process_sample.trimed2 = process_sample.filtered_fq1, process_sample.filtered_fq2
 
     if not args.skip_premap:
@@ -132,4 +142,4 @@ def main():
     return 0
 
 if __name__ == '__main__':
-    main()
+    main(

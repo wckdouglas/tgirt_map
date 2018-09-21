@@ -9,7 +9,6 @@ from functools import partial
 from builtins import map, range
 import re
 import six
-from pybedtools import BedTool
 import pandas as pd
 
 class sample_object():

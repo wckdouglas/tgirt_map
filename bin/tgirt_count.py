@@ -11,6 +11,7 @@ import argparse
 import sys
 from tgirt_map.mapping_tools import sample_object
 from tgirt_map.table_tools import make_table
+import os
 
 def mapper_args(parser):
     parser.add_argument('-1', '--fastq1', 
@@ -83,18 +84,22 @@ def table_args(parser):
 
 
 def getopt():
-    parser = argparse.ArgumentParser(description='Pipeline for mapping and counting for TGIRT-seq paired end data')
+    parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),
+                        description='Pipeline for mapping and counting for TGIRT-seq paired end data')
     subparsers = parser.add_subparsers(help='Command for TGIRT-map',
-                                    dest='subcommand')
-    subparsers = required=True
+                        dest='subcommand')
+    subparsers.required = True
 
+    # mappign subparser
     mapping = subparsers.add_parser("map", 
-                                        help = "do TGIRT mapping and count")
-    table_tool = subparsers.add_parser("table", 
-                                        help = "make count table")
-    
+                            help = "do TGIRT mapping and count")
     mapper_args(mapping)
+    
+    # table subparser
+    table_tool = subparsers.add_parser("table", 
+                            help = "make count table")
     table_args(table_tool)
+    return parser.parse_args()
 
 
 def tgirtmap(args):

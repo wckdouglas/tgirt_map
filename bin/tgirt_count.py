@@ -10,9 +10,9 @@ import glob
 import argparse
 import sys
 from tgirt_map.mapping_tools import sample_object
+from tgirt_map.table_tools import make_table
 
-def getopt():
-    parser = argparse.ArgumentParser(description='Pipeline for mapping and counting for TGIRT-seq paired end data')
+def mapper_args(parser):
     parser.add_argument('-1', '--fastq1', 
               help = 'pairedEnd fastq file (read1)', required=True)
     parser.add_argument('-2', '--fastq2', 
@@ -77,15 +77,30 @@ def getopt():
               help = 'DEBUG: skip counting')
     #parser.add_argument('--hisat2', default='hisat2',  
     #          help = "PATH to Douglas's version of HISAT2, to allow dovetails")
-    args = parser.parse_args()
-    return args
+
+def table_args(parser):
+    parser.add_argument('-i', '--project_path', help = 'TGIRT map output folder', required=True)
 
 
-def main():
+def getopt():
+    parser = argparse.ArgumentParser(description='Pipeline for mapping and counting for TGIRT-seq paired end data')
+    subparsers = parser.add_subparsers(help='Command for TGIRT-map',
+                                    dest='subcommand')
+    subparsers = required=True
+
+    mapping = subparsers.add_parser("map", 
+                                        help = "do TGIRT mapping and count")
+    table_tool = subparsers.add_parser("table", 
+                                        help = "make count table")
+    
+    mapper_args(mapping)
+    table_args(table_tool)
+
+
+def tgirtmap(args):
     programname = sys.argv[0]
     start = time.time()
 
-    args = getopt()
     process_sample = sample_object(args)
 
     process_sample.make_result_dir()
@@ -135,6 +150,16 @@ def main():
     usedTime = end - start
     print('Finished: %s in %.3f hr\n' %(process_sample.samplename ,usedTime/3600), file=sys.stderr)
     return 0
+
+def main():
+    args = getopt()
+    if args.subcommand == 'map':
+        tgirtmap(args)
+    
+    elif args.subcommand == 'table':
+        make_table(args.project_path)
+
+
 
 if __name__ == '__main__':
     main()

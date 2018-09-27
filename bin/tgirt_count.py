@@ -51,6 +51,8 @@ def mapper_args(parser):
               help = 'trim for polyA/T')
     parser.add_argument('--umi', default=0, type=int,
               help = "Number of UMI bases from 5' of R1 (default = 0)")
+    parser.add_argument('--multi', default=10, type=int,
+              help = "Number of multimap alignments to report (default = 10)")
     parser.add_argument('--count_all', action='store_true',
               help = "Ignore UMI for counting, only evaluated with --umi option")
     parser.add_argument('--repeats', default=None,

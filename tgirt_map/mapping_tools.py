@@ -34,6 +34,7 @@ class sample_object():
         self.count_all = args.count_all
         self.novel_splice = args.novel_splice
         self.polyA = args.polyA
+        self.multi = args.multi
 
         #### make folder
         self.trim_folder = self.outpath + '/Trim'
@@ -64,7 +65,8 @@ class sample_object():
         self.run_process = partial(system_run, args.dry, self.samplename)
 
 
-        self.HISAT2 = 'hisat2 --no-mixed --no-discordant '\
+        self.HISAT2 = 'hisat2 '\
+                '--no-mixed --no-discordant '\
                 ' --new-summary --dta --mp 4,2 '\
                 '-p {threads} '.format(threads = self.threads) 
         
@@ -192,8 +194,9 @@ class sample_object():
                 '; samtools view -bf4 {out_bam}' \
                 '| bamToFastq -i - -fq {filtered_fq1} -fq2 {filtered_fq2}'\
                 '; cat {out_bam} '\
+                '| samtools view -bF2048 -F256 -F4 '\
                 '| bam_to_bed.py -i - -o {out_bed} '\
-                '-m 5 -M 10000 ' \
+                '-m 5 -M 10000 -p ' \
                 .format(filtered_fq1 = self.filtered_fq1, 
                         filtered_fq2 = self.filtered_fq2,
                         index = index,
@@ -224,10 +227,11 @@ class sample_object():
 
         # map reads
         command = self.HISAT2 +\
-                ' -k 15 --known-splicesite-infile {splicesite} {splice_option} '\
+                ' -k {multi} --known-splicesite-infile {splicesite} {splice_option} '\
                 '--novel-splicesite-outfile {hisat_out}/novelsite.txt -x {ref} {input}'\
                 '| samtools view -bS -@ {threads} - > {hisat_out}/hisat.bam'\
                 .format(threads=self.threads,
+                        multi = self.multi,
                         splicesite=self.splicesite, 
                         splice_option = splice_option,
                         hisat_out=self.hisat_out, 
@@ -257,9 +261,10 @@ class sample_object():
         _split_option = ' '
 
         # map reads
-        command= self.BOWTIE2 + ' -k 15 -x {index} {input} '\
+        command= self.BOWTIE2 + ' -k {multi} -x {index} {input} '\
                 '| samtools view -@{threads} -bS - > {bowtie_out}/bowtie2.bam'\
-                .format(threads=self.threads, 
+                .format(threads=self.threads,
+                        multi = self.multi, 
                         index=self.bowtie2_index,
                         input=_input,
                         bowtie_out=self.bowtie_out)
@@ -438,12 +443,10 @@ class sample_object():
 
         command = 'cat {combined}/non_sRNAs.counts '\
                     '{combined}/sncRNA.counts '\
-                    '{rRNA_path}/rRNA.counts '\
                 '> {count_path}/{samplename}.counts'\
                 .format(count_path=self.count_raw, 
                         samplename = self.samplename,
-                        combined=self.combined_out, 
-                        rRNA_path=self.rRNA_out) 
+                        combined=self.combined_out) 
         self.run_process(command)
 
     def generate_repeat_count(self):

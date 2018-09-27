@@ -185,7 +185,8 @@ class sample_object():
         _out_bam = RNA_filter_out + '/aligned.bam'
         _out_bed = RNA_filter_out + '/aligned.bed'
         _out_count = RNA_filter_out + '/aligned.count'
-        command = self.BOWTIE2 + ' -k 1 -x {index} {input} '\
+        command = self.HISAT2 + ' --no-spliced-alignment '\
+                ' -k 1 -x {index} {input} '\
                 '| samtools view -bS@{threads} - '\
                 '> {out_bam} ' \
                 '; samtools view -bf4 {out_bam}' \

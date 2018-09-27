@@ -438,12 +438,10 @@ class sample_object():
 
         command = 'cat {combined}/non_sRNAs.counts '\
                     '{combined}/sncRNA.counts '\
-                    '{rRNA_path}/rRNA.counts '\
                 '> {count_path}/{samplename}.counts'\
                 .format(count_path=self.count_raw, 
                         samplename = self.samplename,
-                        combined=self.combined_out, 
-                        rRNA_path=self.rRNA_out) 
+                        combined=self.combined_out) 
         self.run_process(command)
 
     def generate_repeat_count(self):

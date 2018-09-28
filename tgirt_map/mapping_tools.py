@@ -1,5 +1,3 @@
-
-
 from __future__ import division, print_function
 import os
 import sys
@@ -451,7 +449,7 @@ class sample_object():
 
     def generate_repeat_count(self):
         command = 'samtools fastq -N@ {threads} {combined_path}/repeats.bam '\
-                '-1 {repeat_path}/repeats_1.fq.gz -2 {repeat_path}/reapeats_2.fq.gz'\
+                '-1 {repeat_path}/repeats_1.fq.gz -2 {repeat_path}/repeats_2.fq.gz'\
                     .format(repeat_path=self.repeat_out,
                             combined_path =self.combined_out, 
                             threads = self.threads)

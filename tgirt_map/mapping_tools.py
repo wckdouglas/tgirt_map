@@ -70,8 +70,8 @@ class sample_object():
                 ' --new-summary --dta --mp 4,2 '\
                 '-p {threads} '.format(threads = self.threads) 
         
-        self.BOWTIE2 = 'bowtie2 ' \
-                '-L 8 -i S,1,0.50 --local --mp 4,2 '\
+        self.BOWTIE2 = ' bowtie2 --score-min G,1,10 ' \
+                '-L 8 -i S,1,0.50 --local --mp 4,2 -N 1 '\
                 '--no-mixed --no-discordant --dovetail '\
                 '-p {threads}'.format(threads = self.threads)
 
@@ -187,7 +187,7 @@ class sample_object():
         _out_bam = RNA_filter_out + '/aligned.bam'
         _out_bed = RNA_filter_out + '/aligned.bed'
         _out_count = RNA_filter_out + '/aligned.count'
-        command = self.HISAT2 + ' --no-spliced-alignment -I 10 -X 500 '\
+        command = self.BOWTIE2  + \
                 ' -k 1 -x {index} {input} '\
                 '| samtools view -bS@{threads} - '\
                 '> {out_bam} ' \
@@ -459,7 +459,8 @@ class sample_object():
         fq_input = ' -1 {repeat_path}/repeats_1.fq.gz -2 {repeat_path}/repeats_2.fq.gz '\
                     .format(repeat_path = self.repeat_out)
 
-        command = self.BOWTIE2 + ' -x {repeat_index} {input} '\
+        command = self.BOWTIE2 + \
+                ' -x {repeat_index} {input} '\
                 '| samtools view -bS@ {threads} - > {repeat_path}/repeat_remap.bam'\
                 .format(threads=self.threads,
                         repeat_index=self.rmsk_index,

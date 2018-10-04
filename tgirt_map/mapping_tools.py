@@ -69,7 +69,8 @@ class sample_object():
                 '-p {threads} '.format(threads = self.threads) 
         
         self.BOWTIE2 = ' bowtie2 --score-min G,1,10 ' \
-                '-L 8 -i S,1,0.50 --local --mp 4,2 -N 1 '\
+                '--very-sensitive-local ' \
+                '-L 8 -i S,1,0.50 --mp 4,2 -N 1 '\
                 '--no-mixed --no-discordant --dovetail '\
                 '-p {threads}'.format(threads = self.threads)
 
@@ -185,7 +186,7 @@ class sample_object():
         _out_bam = RNA_filter_out + '/aligned.bam'
         _out_bed = RNA_filter_out + '/aligned.bed'
         _out_count = RNA_filter_out + '/aligned.count'
-        command = self.HISAT2 + ' --no-spliced-alignment ' \
+        command = self.BOWTIE2 + \
                 ' -k 1 -x {index} {input} '\
                 '| samtools view -bS@{threads} - '\
                 '> {out_bam} ' \

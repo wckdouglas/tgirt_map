@@ -137,8 +137,8 @@ class sample_object():
                 -G front 
                 -A adapter
             '''
-            shared_options += '--overlap 7 --nextseq-trim=25 --times=2 --max-n=3 --batch-size 50000 '\
-                            '--error-rate=0.2 --front={front_adapter1} --anywhere={anywhere_adapter1} '\
+            shared_options += '--overlap 5 --nextseq-trim=25 --times=2 --max-n=3 --batch-size 50000 '\
+                            '--error-rate=0.1 --front={front_adapter1} --anywhere={anywhere_adapter1} '\
                             '-G {front_adapter2} -B {anywhere_adapter2}  --pair-filter both '\
                             .format(front_adapter1 = R2, anywhere_adapter1 = rvs_byproduct,
                                      front_adapter2 = R2R, anywhere_adapter2 = fwd_byproduct)  +\

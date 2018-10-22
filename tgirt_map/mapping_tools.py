@@ -152,11 +152,13 @@ class sample_object():
                                 file1= self.fastq1, file2= self.fastq2)
 
         elif self.UMI > 0:
+            temp = '{trimed1}.temp.gz'.format(trimed1 = self.trimed1)
             command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '\
-                        ' --barcodeCutOff=20 --out_file=- -r read1 ' \
-                    ' | atropos trim {option} {shared_options} {adaptors}  --interleaved-input - '\
+                        ' --barcodeCutOff=20 --out_file={TEMP} -r read1 ' \
+                    '; atropos trim {option} {shared_options} {adaptors}  '\
+                    '--interleaved-input {TEMP} '\
                     ' --interleaved-output - --quiet  --report-file /dev/stderr -f fastq '\
-                    ' | deinterleave_fastq.py -i - -1 {trimed1} -2 {trimed2} '\
+                    ' | deinterleave_fastq.py -i - -1 {trimed1} -2 {trimed2} ; rm {TEMP}'\
                     .format(file1= self.fastq1, 
                             file2= self.fastq2, 
                             umi=self.UMI*'X',
@@ -164,7 +166,8 @@ class sample_object():
                             adaptors=paired_end_adaptor, 
                             shared_options=shared_options,
                             trimed1=self.trimed1, 
-                            trimed2=self.trimed2)
+                            trimed2=self.trimed2,
+                            TEMP = temp)
         self.run_process(command)
 
 
@@ -180,8 +183,8 @@ class sample_object():
             RNA_filter_out = self.smRNA_out
             index = self.smRNA_index
 
-        self.filtered_fq1 = RNA_filter_out + '/filtered.1.fq'
-        self.filtered_fq2 = RNA_filter_out + '/filtered.2.fq'
+        self.filtered_fq1 = RNA_filter_out + '/filtered.1.fq.gz'
+        self.filtered_fq2 = RNA_filter_out + '/filtered.2.fq.gz'
         _input = '-1 {trimmed1} -2 {trimmed2}'.format(trimmed1 = self.trimed1, trimmed2 = self.trimed2)
         _out_bam = RNA_filter_out + '/aligned.bam'
         _out_bed = RNA_filter_out + '/aligned.bed'
@@ -190,8 +193,7 @@ class sample_object():
                 ' -k 1 -x {index} {input} '\
                 '| samtools view -bS@{threads} - '\
                 '> {out_bam} ' \
-                '; samtools view -bf4 {out_bam}' \
-                '| bamToFastq -i - -fq {filtered_fq1} -fq2 {filtered_fq2}'\
+                '; samtools fastq -nf4 -1 {filtered_fq2} -2 {filtered_fq2} {out_bam}'\
                 '; cat {out_bam} '\
                 '| samtools view -bF2048 -F256 -F4 '\
                 '| bam_to_bed.py -i - -o {out_bed} '\

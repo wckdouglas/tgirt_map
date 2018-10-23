@@ -154,7 +154,7 @@ class sample_object():
         elif self.UMI > 0:
             temp = '{trimed1}.temp.gz'.format(trimed1 = self.trimed1)
             command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '\
-                        ' --barcodeCutOff=20 --out_file={TEMP} -r read1 ' \
+                        ' --barcodeCutOff=20 --out_file={TEMP} -r read1 --min_length 15 ' \
                     '; atropos trim {option} {shared_options} {adaptors}  '\
                     '--interleaved-input {TEMP} '\
                     ' --quiet  --report-file /dev/stderr -f fastq '\

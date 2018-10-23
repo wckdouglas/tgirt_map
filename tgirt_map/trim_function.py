@@ -1,3 +1,5 @@
+import re
+
 def trimming(config, input, output, params):
     ''' 
     atropos detected:
@@ -40,7 +42,7 @@ def trimming(config, input, output, params):
             '-A {R1R} '.format(R1R=R1R)
     shared_options = '--minimum-length=15 --threads={threads} --no-cache-adapters '\
             .format(threads = config['threads'])
-    if not config['trim_hard']:
+    if not config['trim_aggressive']:
         shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20  --aligner insert '
 
     else:
@@ -56,14 +58,14 @@ def trimming(config, input, output, params):
                                     front_adapter2 = R2R, anywhere_adapter2 = fwd_byproduct)  +\
                         ' -A T{100} -A A{100} -a A{100} -a T{100} '
 
-    if config['UMI'] == 0:
+    if config['umi'] == 0:
         command = 'atropos trim {option} {adaptors} {shared_options} '\
                     '-o {trimed1} -p {trimed2} -pe1 {file1} -pe2 {file2}'\
                     .format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options,
                             trimed1 = output['FQ1'], trimed2 = output['FQ2'],
                             file1 = input['FQ1'], file2 = input['FQ2'])
 
-    elif config['UMI'] > 0:
+    elif config['umi'] > 0:
         command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '\
                     ' --barcodeCutOff=20 --out_file={TEMP} -r read1 --min_length 15 ' \
                 '; atropos trim {option} {shared_options} {adaptors}  '\
@@ -74,7 +76,7 @@ def trimming(config, input, output, params):
                 '; rm {TEMP}'\
                 .format(file1= config['fastq1'], 
                         file2= config['fastq2'], 
-                        umi = config['UMI']*'X',
+                        umi = config['umi']*'X',
                         option = option,
                         adaptors = paired_end_adaptor, 
                         shared_options = shared_options,

@@ -1,6 +1,6 @@
 from collections import defaultdict, Counter
 from pandas import DataFrame
-from trim_function import trimming
+from tgirt_map.trim_function import trimming
 
 # set up config
 FASTQ1 = config["fastq1"]
@@ -634,7 +634,7 @@ rule trim:
     run:
         command = trimming(config, input, output, params)
         print(command)
-        shell(command)
+        os.system(command)
 
 
 def count_rRNA(RNA, start, end):

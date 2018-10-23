@@ -158,7 +158,8 @@ class sample_object():
                     '; atropos trim {option} {shared_options} {adaptors}  '\
                     '--interleaved-input {TEMP} '\
                     ' --quiet  --report-file /dev/stderr -f fastq '\
-                    ' -o {trimed1} -p {trimed2} ; rm {TEMP}'\
+                    '--interleaved-out /dev/stdout '\
+                    '| deinterleave_fastq.py -1 {trimed1} -2 {trimed2} --min_length 15 ; rm {TEMP}'\
                     .format(file1= self.fastq1, 
                             file2= self.fastq2, 
                             umi=self.UMI*'X',

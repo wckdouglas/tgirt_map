@@ -13,6 +13,7 @@ from tgirt_map.mapping_tools import sample_object
 from tgirt_map.table_tools import make_table
 import tgirt_map
 import os
+import pkg_resources
 
 def mapper_args(parser):
     parser.add_argument('-1', '--fastq1', 
@@ -109,12 +110,14 @@ def getopt():
     return parser.parse_args()
 
 def snake_map(args):
-    options = 'snakemake -s snakemake/tgirt_map.smk -Fnp -j 24 --config '
+
+    snakefile_dir = pkg_resources.resource_filename('tgirt_map', 'snakemake')
+    options = 'snakemake -s {}/tgirt_map.smk -Fnp -j 24 --config '.format(snakefile_dir)
     for key, value in vars(args).items():
         if key != "subcommand":
             options += '{}={} '.format(key, value) 
     print (options)
-    if args.dry:
+    if not args.dry:
         os.system(options)
 
 

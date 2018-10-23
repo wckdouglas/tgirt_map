@@ -1,5 +1,5 @@
-from collections import defaultdict
-from tgirt_map.mapping_tools import count_bed
+from collections import defaultdict, Counter
+import six
 
 # set up config
 FASTQ1 = config["fastq1"]
@@ -104,7 +104,7 @@ BOWTIE2 = ' bowtie2  ' \
         '-p {threads}'.format(threads = config['threads'])
 
 #shared command
-RNA_FILTER_ALIGN_COMMAND = BOWTIE2 + '-k 1 -x {params.INDEX} '\
+RNA_FILTER_ALIGN_COMMAND = BOWTIE2 + ' -k 1 -x {params.INDEX} '\
     '-1 {input.FQ1} -2 {input.FQ2} ' \
     '| samtools view -bS@ {params.THREADS} - '\
     '> {output.BAM} '
@@ -205,7 +205,7 @@ rule count_repeats:
         REPEAT_COUNT_FILE
 
     run:
-        repeat_count = defaultdict(lambda: defaultdict(int))
+        repeat_count = defaultdict(Counter)
         repeat_bed = input[0]
         repeat_count_file = output[0]
 
@@ -218,8 +218,8 @@ rule count_repeats:
                 repeat_count[repeat][strand] += 1
 
         with open(repeat_count_file, 'w') as count_file:
-            for repeat_name, strand_dict in six.iteritems(repeat_count):
-                for strand, value in six.iteritems(strand_dict):
+            for repeat_name, strand_dict in repeat_count.items():
+                for strand, value in strand_dict.items():
                     print('%s\t%s\t%i' %(repeat_name, strand, value), file=count_file)
 
 
@@ -239,7 +239,7 @@ rule make_repeat_bed:
     shell:
         BOWTIE2 + \
         ' -x {params.INDEX} -1 {input.FQ1} -2 {input.FQ2} '  \
-        '| samtools view -bs@ '\
+        '| samtools view -F4 -b -@ {params.THREADS} '\
         '| tee {output.BAM} '\
         '| bam_to_bed.py -i - -o {output.BED}  -m 5 -M 10000'
 
@@ -349,7 +349,7 @@ rule make_primary_bam:
 
     shell:
         'samtools cat {input.MULTI} {input.HISAT} {input.BOWTIE} '\
-        '| filter_soft_clip.py -s 0.1 -b 0.2 -i -o - --pe '\
+        '| filter_soft_clip.py -s 0.1 -b 0.2 -i - -o - --pe '\
         '| samtools sort -n@ {params.THREADS} -O bam -T {params.TEMP} -o {output.BAM}'
 
 
@@ -430,7 +430,7 @@ rule hisat_unmapped:
 
     shell:
         'samtools fastq -f4 -@ {params.THREADS} '\
-        ' -1 {output.FQ1} -2 {output.FQ2}'
+        ' -1 {output.FQ1} -2 {output.FQ2} {input.BAM}'
 
     
 rule hisat_align:
@@ -509,7 +509,7 @@ rule smallRNA_align:
 
 
 #### MT rRNA FILTER ####
-rule count_rRNA:
+rule count_rRNA_align:
     input:
         mt_rRNA_MAPPED_BED
 
@@ -652,4 +652,43 @@ rule trim:
         '| deinterleave_fastq.py -1 {output.FQ1} -2 {output.FQ2} '\
         '--min_length 15 '\
         '; rm /{params.TEMP_FQ}'
+
+
+def count_rRNA(RNA, start, end):
+    gene = 'rDNA'
+    RNA_5S = RNA == 'gi|23898|emb|X12811.1|' and end >= 274  and start <= 394
+    RNA_18S = RNA== 'gi|555853|gb|U13369.1|HSU13369' and  end >= 3657  and start <= 5527
+    RNA_58S = RNA == 'gi|555853|gb|U13369.1|HSU13369' and end >= 6623  and start <=  6779
+    RNA_28S = RNA == 'gi|555853|gb|U13369.1|HSU13369' and end >= 7935 and start <= 12969
+    if RNA_5S:
+        gene = '5S_rRNA'
+    elif RNA_18S:
+        gene = '18S_rRNA'
+    elif RNA_58S:
+        gene = '5.8S_rRNA'
+    elif RNA_28S:
+        gene = '28S_rRNA'
+    return gene
+
+
+def count_bed(inbed, out_count):
+    count_dict = Counter()
+
+    with open(inbed, 'r') as inb:
+        for line in inb:
+            fields = line.rstrip().split('\t')
+            RNA = fields[0]
+            strand = fields[5]
+            if strand == '+':
+                if not RNA.startswith('gi'):
+                    count_dict[RNA] += 1
+                else:
+                    gene = count_rRNA(RNA, int(fields[1]), int(fields[2]))
+                    count_dict[gene] += 1
+
+    pd.DataFrame({'gene':list(count_dict.keys()),
+                       'count': list(count_dict.values())}) \
+        .filter(['gene','count'])\
+        .to_csv(out_count, index=False, sep='\t', header=False)
+    print('Written %s\n' %out_count, file=sys.stderr)
 

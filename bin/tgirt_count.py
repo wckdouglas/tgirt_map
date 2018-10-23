@@ -103,6 +103,9 @@ def getopt():
     table_args(table_tool)
     return parser.parse_args()
 
+def snake_map(args):
+    print(vars(args)) 
+
 
 def tgirtmap(args):
     programname = sys.argv[0]
@@ -161,7 +164,8 @@ def tgirtmap(args):
 def main():
     args = getopt()
     if args.subcommand == 'map':
-        tgirtmap(args)
+        snake_map(args)
+        #tgirtmap(args)
     
     elif args.subcommand == 'table':
         make_table(args.project_path)

@@ -193,7 +193,7 @@ class sample_object():
                 ' -k 1 -x {index} {input} '\
                 '| samtools view -bS@{threads} - '\
                 '> {out_bam} ' \
-                '; samtools fastq -nf4 -1 {filtered_fq2} -2 {filtered_fq2} {out_bam}'\
+                '; samtools fastq -nf4 -1 {filtered_fq1} -2 {filtered_fq2} {out_bam}'\
                 '; cat {out_bam} '\
                 '| samtools view -bF2048 -F256 -F4 '\
                 '| bam_to_bed.py -i - -o {out_bed} '\

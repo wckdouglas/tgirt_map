@@ -112,13 +112,15 @@ def getopt():
 def snake_map(args):
 
     snakefile_dir = pkg_resources.resource_filename('tgirt_map', 'snakemake')
-    options = 'snakemake -s {}/tgirt_map.smk -Fnp -j 24 --config '.format(snakefile_dir)
+    options = 'snakemake -s {}/tgirt_map.smk -Fp -j 24 --config '.format(snakefile_dir)
     for key, value in vars(args).items():
         if key != "subcommand":
             options += '{}={} '.format(key, value) 
     print (options)
     if not args.dry:
         os.system(options)
+    else:
+        os.system(options + ' -n ')
 
 
 def tgirtmap(args):

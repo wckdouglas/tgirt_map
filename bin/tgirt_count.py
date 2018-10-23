@@ -11,7 +11,9 @@ import argparse
 import sys
 from tgirt_map.mapping_tools import sample_object
 from tgirt_map.table_tools import make_table
+import tgirt_map
 import os
+import pkg_resources
 
 def mapper_args(parser):
     parser.add_argument('-1', '--fastq1', 
@@ -25,6 +27,8 @@ def mapper_args(parser):
                                          '            3. $resultpath/bowtie2\n' + \
                                          '            4. $resultpath/mergeBam (all useful result files)\n',
                         required=True)
+    parser.add_argument('--samplename', required=True,  
+              help = 'samplename to use')
     parser.add_argument('--hisat_index', 
               help = 'hisat2 index', required=True)
     parser.add_argument('--bowtie2_index', 
@@ -78,6 +82,8 @@ def mapper_args(parser):
               help = 'DEBUG: skip tRNA/rRNA remapping')
     parser.add_argument('--skip_count', action='store_true',  
               help = 'DEBUG: skip counting')
+    parser.add_argument('--snakemake', action = 'store_true',
+            help = 'Use snakemake workflow')
     #parser.add_argument('--hisat2', default='hisat2',  
     #          help = "PATH to Douglas's version of HISAT2, to allow dovetails")
 
@@ -102,6 +108,19 @@ def getopt():
                             help = "make count table")
     table_args(table_tool)
     return parser.parse_args()
+
+def snake_map(args):
+
+    snakefile_dir = pkg_resources.resource_filename('tgirt_map', 'snakemake')
+    options = 'snakemake -s {}/tgirt_map.smk -Fp -j 24 --config '.format(snakefile_dir)
+    for key, value in vars(args).items():
+        if key != "subcommand":
+            options += '{}={} '.format(key, value) 
+    print (options)
+    if not args.dry:
+        os.system(options)
+    else:
+        os.system(options + ' -n ')
 
 
 def tgirtmap(args):
@@ -161,7 +180,10 @@ def tgirtmap(args):
 def main():
     args = getopt()
     if args.subcommand == 'map':
-        tgirtmap(args)
+        if args.snakemake:
+            snake_map(args)
+        else:
+            tgirtmap(args)
     
     elif args.subcommand == 'table':
         make_table(args.project_path)

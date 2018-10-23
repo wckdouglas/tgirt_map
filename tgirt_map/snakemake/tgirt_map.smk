@@ -1,5 +1,6 @@
 from collections import defaultdict, Counter
 from pandas import DataFrame
+from trim_function import trimming
 
 # set up config
 FASTQ1 = config["fastq1"]
@@ -630,28 +631,10 @@ rule trim:
         FQ1 = TRIMMED_FQ1,
         FQ2 = TRIMMED_FQ2
 
-    shell:
-        'clip_fastq.py --fastq1={input.FQ1} --fastq2={input.FQ2} '\
-        '--idxBase={params.UMI}  --barcodeCutOff=20 '\
-        '--out_file={params.TEMP_FQ} -r read1 --min_length 15 '\
-        '; atropos trim -U 1 --minimum-length=15 --threads={params.THREADS} '\
-        '--no-cache-adapters --overlap 5 --nextseq-trim=25 --times=2 --max-n=3 '\
-        '--batch-size 100000 --error-rate=0.1 '\
-        '--front=GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTT ' \
-        '--anywhere=AAGATCGGAAGAGC -B GTGACTGGAGTTCAGACGTGTGC ' \
-        '-b AAGATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTTG '  \
-        '-G AAGATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTTG ' \
-        '-B GCTCTTCCGATCTT -b GCACACGTCTGAACTCCAGTCAC '\
-        '-b GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTT   --pair-filter both '\
-        ' -A T{{100}} -A A{{100}} -a A{{100}} -a T{{100}}  '\
-        '--adapter=AAGATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTTG '\
-        '-A GATCGTCGGACTGTAGAACTCTGAACGTGTAGA   '\
-        '--interleaved-input {params.TEMP_FQ} '\
-        ' --quiet  --report-file /dev/stderr -f fastq '\
-        '--interleaved-out /dev/stdout '\
-        '| deinterleave_fastq.py -1 {output.FQ1} -2 {output.FQ2} '\
-        '--min_length 15 '\
-        '; rm /{params.TEMP_FQ}'
+    run:
+        command = trimming(config, input, output, params)
+        print(command)
+        shell(command)
 
 
 def count_rRNA(RNA, start, end):

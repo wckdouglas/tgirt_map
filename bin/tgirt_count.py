@@ -115,6 +115,11 @@ def snake_map(args):
     options = 'snakemake -s {}/tgirt_map.smk -Fp -j 24 --config '.format(snakefile_dir)
     for key, value in vars(args).items():
         if key != "subcommand":
+            if value == True:
+                value = 1
+            elif value == False:
+                value = 0
+                
             options += '{}={} '.format(key, value) 
     print (options)
     if not args.dry:

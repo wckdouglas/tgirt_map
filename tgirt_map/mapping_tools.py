@@ -41,7 +41,7 @@ class sample_object():
         self.count_rmsk = self.count_folder + '/repeat_RAW'
 
         #define sample folder
-        self.samplename = re.sub('.fastq|.gz|.fq','',self.fastq1.split('/')[-1])
+        self.samplename = args.samplename
         self.sample_folder = self.outpath + '/' + self.samplename
         self.hisat_out = self.sample_folder + '/Hisat'
         self.rRNA_mt_out = self.sample_folder + '/rRNA_mt'

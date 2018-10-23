@@ -1,5 +1,5 @@
 from collections import defaultdict
-from mapping_tools import count_bed
+from tgirt_map.mapping_tools import count_bed
 
 # set up config
 FASTQ1 = config["fastq1"]
@@ -30,9 +30,9 @@ RAW_COUNT_PATH = COUNT_PATH + '/RAW'
 REPEAT_COUNT_PATH = COUNT_PATH + '/repeat_RAW'
 
 SAMPLE_FOLDER = OUTPATH + '/' + SAMPLENAME
-UNIVEC_FILTER_FOLDER = SAMPLE_FOLDER + '/UniVec'
-mt_rRNA_FILTER_FOLDER = SAMPLE_FOLDER + '/rRNA_mt'
-SMALL_RNA_FILTER_FOLDER = SAMPLE_FOLDER + '/smallRNA'
+UNIVEC_FOLDER = SAMPLE_FOLDER + '/UniVec'
+mt_rRNA_FOLDER = SAMPLE_FOLDER + '/rRNA_mt'
+SMALL_RNA_FOLDER = SAMPLE_FOLDER + '/smallRNA'
 HISAT_FOLDER = SAMPLE_FOLDER + '/hisat'
 BOWTIE_FOLDER = SAMPLE_FOLDER + '/bowtie'
 COMBINED_FOLDER = SAMPLE_FOLDER + '/Combined'
@@ -60,7 +60,7 @@ SNC_RNA_UNMAPPED_FQ1 = SMALL_RNA_FOLDER + '/filtered.1.fq.gz'
 SNC_RNA_UNMAPPED_FQ2 = SMALL_RNA_FOLDER + '/filtered.2.fq.gz'
 SNC_RNA_COUNT = SMALL_RNA_FOLDER + '/aligned.count'
 
-HISAT_BAM = HISAT_FODLER + '/aligned.bam'
+HISAT_BAM = HISAT_FOLDER + '/aligned.bam'
 HISAT_UNIQUE_BAM = HISAT_FOLDER + '/hisat.unique.bam'
 HISAT_MULTI_BAM = HISAT_FOLDER + '/hisat.multi.bam'
 HISAT_UNMAPPED_FQ1 = HISAT_FOLDER + '/unmapped.1.fq.gz'
@@ -79,11 +79,11 @@ PRIMARY_REPEAT_BAM = COMBINED_FOLDER + '/repeats.bam'
 PRIMARY_SNC_BED = COMBINED_FOLDER + '/sncRNA.bed'
 PRIMARY_BED = COMBINED_FOLDER + '/primary_no_sRNAs.bed'
 
-PRIMARY_BED = COMBINED_FOLDEr + '/primary_no_sRNAs.bed'
+PRIMARY_BED = COMBINED_FOLDER + '/primary_no_sRNAs.bed'
 RMSK_FQ1 = REPEAT_FOLDER + '/repeats.1.fq.gz'
 RMSK_FQ2 = REPEAT_FOLDER + '/repeats.2.fq.gz'
 RMSK_BED = REPEAT_FOLDER + '/repeats.bed'
-RMSK_BED = REPEAT_FOLDER + '/repeats_remap.bam'
+RMSK_BAM = REPEAT_FOLDER + '/repeats_remap.bam'
 
 SNC_COUNT = COMBINED_FOLDER + '/sncRNA.counts'
 NO_SNC_COUNT = COMBINED_FOLDER + '/non_sRNAs.counts'
@@ -170,7 +170,7 @@ rule generate_snc_count:
         ANNOTATION = BEDPATH + '/sncRNA_no_tRNA.bed'
 
     output:
-        COUNT_FILE = sRNA_COUNT
+        COUNT_FILE = SNC_COUNT
     
     shell:
         RNA_COUNT_COMMAND
@@ -336,12 +336,12 @@ rule extract_tRNA_bam:
 
 rule make_primary_bam:
     input:
-        MULTI = MULTI_FILTER_BAM,
+        MULTI = FILTERED_MULTI_BAM,
         HISAT = HISAT_UNIQUE_BAM,
         BOWTIE = BOWTIE_UNIQUE_BAM
 
     params:
-        THREADS = THREADS
+        THREADS = THREADS,
         TEMP = COMBINED_FOLDER
 
     output:
@@ -480,6 +480,9 @@ rule make_unalign_smallRNA_fq:
     input:
         BAM = SNC_RNA_MAPPED_BAM
 
+    params:
+        THREADS = THREADS,
+
     output:
         FQ1 = SNC_RNA_UNMAPPED_FQ1,
         FQ2 = SNC_RNA_UNMAPPED_FQ2
@@ -532,6 +535,9 @@ rule make_unalign_rRNA_fq:
     input:
         BAM = mt_rRNA_MAPPED_BAM
 
+    params:
+        THREADS = THREADS
+
     output:
         FQ1 = mt_rRNA_UNMAPPED_FQ1,
         FQ2 = mt_rRNA_UNMAPPED_FQ2
@@ -542,7 +548,7 @@ rule make_unalign_rRNA_fq:
 
 rule rRNA_align:
     input:
-        FQ1 = UNIVEV_UNMAPPED_FQ1,
+        FQ1 = UNIVEC_UNMAPPED_FQ1,
         FQ2 = UNIVEC_UNMAPPED_FQ2,
     
     params:
@@ -582,6 +588,9 @@ rule make_unalign_univec_fq:
     input:
         BAM = UNIVEC_MAPPED_BAM
 
+    params:
+        THREADS = THREADS
+
     output:
         FQ1 = UNIVEC_UNMAPPED_FQ1,
         FQ2 = UNIVEC_UNMAPPED_FQ2
@@ -606,7 +615,6 @@ rule univec_align:
         RNA_FILTER_ALIGN_COMMAND
 
 
-
 ### TRIMMING ###
 rule trim:
     input:
@@ -615,7 +623,7 @@ rule trim:
     
     params:
         THREADS = THREADS,
-        UMI = len(UMI) * 'X'
+        UMI = UMI * 'X',
         TEMP_FQ = TRIMMED_FQ1 + '.temp.fq.gz'
 
     output:
@@ -635,7 +643,7 @@ rule trim:
         '-G AAGATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTTG' \
         '-B GCTCTTCCGATCTT -b GCACACGTCTGAACTCCAGTCAC '\
         '-b GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCTT   --pair-filter both '\
-        ' -A T{100} -A A{100} -a A{100} -a T{100}  '\
+        ' -A T{{100}} -A A{{100}} -a A{{100}} -a T{{100}}  '\
         '--adapter=AAGATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTTG '\
         '-A GATCGTCGGACTGTAGAACTCTGAACGTGTAGA   '\
         '--interleaved-input {params.TEMP_FQ} '\

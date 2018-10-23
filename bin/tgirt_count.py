@@ -25,6 +25,8 @@ def mapper_args(parser):
                                          '            3. $resultpath/bowtie2\n' + \
                                          '            4. $resultpath/mergeBam (all useful result files)\n',
                         required=True)
+    parser.add_argument('--samplename', required=True,  
+              help = 'samplename to use')
     parser.add_argument('--hisat_index', 
               help = 'hisat2 index', required=True)
     parser.add_argument('--bowtie2_index', 
@@ -104,7 +106,11 @@ def getopt():
     return parser.parse_args()
 
 def snake_map(args):
-    print(vars(args)) 
+    options = 'snakemake -s snakemake/tgirt_map.smk  --config '
+    for key, value in vars(args).items():
+        if key != "subcommand":
+            options += '{}={} '.format(key, value) 
+    print (options)
 
 
 def tgirtmap(args):

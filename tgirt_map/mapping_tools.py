@@ -68,9 +68,9 @@ class sample_object():
                 ' --new-summary --dta --mp 4,2 '\
                 '-p {threads} '.format(threads = self.threads) 
         
-        self.BOWTIE2 = ' bowtie2 --score-min G,1,10 ' \
+        self.BOWTIE2 = ' bowtie2  ' \
                 '--very-sensitive-local ' \
-                '-L 8 -i S,1,0.50 --mp 4,2 -N 1 '\
+                '-L 8  --mp 4,2 -N 1 '\
                 '--no-mixed --no-discordant --dovetail '\
                 '-p {threads}'.format(threads = self.threads)
 
@@ -157,8 +157,8 @@ class sample_object():
                         ' --barcodeCutOff=20 --out_file={TEMP} -r read1 ' \
                     '; atropos trim {option} {shared_options} {adaptors}  '\
                     '--interleaved-input {TEMP} '\
-                    ' --interleaved-output - --quiet  --report-file /dev/stderr -f fastq '\
-                    ' | deinterleave_fastq.py -i - -1 {trimed1} -2 {trimed2} ; rm {TEMP}'\
+                    ' --quiet  --report-file /dev/stderr -f fastq '\
+                    ' -o {trimed1} -p {trimed2} ; rm {TEMP}'\
                     .format(file1= self.fastq1, 
                             file2= self.fastq2, 
                             umi=self.UMI*'X',

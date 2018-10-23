@@ -11,6 +11,7 @@ import argparse
 import sys
 from tgirt_map.mapping_tools import sample_object
 from tgirt_map.table_tools import make_table
+import tgirt_map
 import os
 
 def mapper_args(parser):
@@ -80,6 +81,8 @@ def mapper_args(parser):
               help = 'DEBUG: skip tRNA/rRNA remapping')
     parser.add_argument('--skip_count', action='store_true',  
               help = 'DEBUG: skip counting')
+    parser.add_argument('--snakemake', action = 'store_true',
+            help = 'Use snakemake workflow')
     #parser.add_argument('--hisat2', default='hisat2',  
     #          help = "PATH to Douglas's version of HISAT2, to allow dovetails")
 
@@ -106,11 +109,13 @@ def getopt():
     return parser.parse_args()
 
 def snake_map(args):
-    options = 'snakemake -s snakemake/tgirt_map.smk  --config '
+    options = 'snakemake -s snakemake/tgirt_map.smk -Fnp -j 24 --config '
     for key, value in vars(args).items():
         if key != "subcommand":
             options += '{}={} '.format(key, value) 
     print (options)
+    if args.dry:
+        os.system(options)
 
 
 def tgirtmap(args):
@@ -170,8 +175,10 @@ def tgirtmap(args):
 def main():
     args = getopt()
     if args.subcommand == 'map':
-        snake_map(args)
-        #tgirtmap(args)
+        if args.snakemake:
+            snake_map(args)
+        else:
+            tgirtmap(args)
     
     elif args.subcommand == 'table':
         make_table(args.project_path)

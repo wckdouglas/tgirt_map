@@ -1,5 +1,5 @@
 from collections import defaultdict, Counter
-import six
+from pandas import DataFrame
 
 # set up config
 FASTQ1 = config["fastq1"]
@@ -686,7 +686,7 @@ def count_bed(inbed, out_count):
                     gene = count_rRNA(RNA, int(fields[1]), int(fields[2]))
                     count_dict[gene] += 1
 
-    pd.DataFrame({'gene':list(count_dict.keys()),
+    DataFrame({'gene':list(count_dict.keys()),
                        'count': list(count_dict.values())}) \
         .filter(['gene','count'])\
         .to_csv(out_count, index=False, sep='\t', header=False)

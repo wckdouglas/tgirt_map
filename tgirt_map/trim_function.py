@@ -53,7 +53,7 @@ def trimming(config, input, output, params):
         '''
         shared_options += '--overlap 5 --nextseq-trim=25 --times=2 --max-n=3 --batch-size 100000 '\
                         '--error-rate=0.1 --front={front_adapter1} --anywhere={anywhere_adapter1} '\
-                        '-G {front_adapter2} -B {anywhere_adapter2}  --pair-filter both '\
+                        '-G {front_adapter2} -B {anywhere_adapter2}  --pair-filter both --process-timeout 300 '\
                         .format(front_adapter1 = R2, anywhere_adapter1 = rvs_byproduct,
                                     front_adapter2 = R2R, anywhere_adapter2 = fwd_byproduct)  +\
                         ' -A T{100} -A A{100} -a A{100} -a T{100} '

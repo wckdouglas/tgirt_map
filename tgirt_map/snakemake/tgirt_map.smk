@@ -622,18 +622,13 @@ rule trim:
         FQ1 = FASTQ1,
         FQ2 = FASTQ2
     
-    params:
-        THREADS = THREADS,
-        UMI = UMI * 'X',
-        TEMP_FQ = TRIMMED_FQ1 + '.temp.fq.gz'
-
     output:
         FQ1 = TRIMMED_FQ1,
         FQ2 = TRIMMED_FQ2
 
     run:
         trimming = fastp_trimming if config['fastp'] else atropos_trimming
-        command = trimming(config, input, output, params)
+        command = trimming(config, input, output)
         print(command)
         os.system(command)
 

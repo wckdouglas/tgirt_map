@@ -74,8 +74,8 @@ def trimming(config, input, output, params):
                 '--interleaved-out /dev/stdout '\
                 '| deinterleave_fastq.py -1 {trimed1} -2 {trimed2} --min_length 15 '\
                 '; rm {TEMP}'\
-                .format(file1= config['fastq1'], 
-                        file2= config['fastq2'], 
+                .format(file1= input['FQ1'], 
+                        file2= input['FQ2'], 
                         umi = config['umi']*'X',
                         option = option,
                         adaptors = paired_end_adaptor, 
@@ -83,4 +83,42 @@ def trimming(config, input, output, params):
                         trimed1 = output['FQ1'], 
                         trimed2 = output['FQ2'],
                         TEMP = params['TEMP_FQ'])
+    return command
+
+
+def fastp_trimming(config, input, output, params):
+
+    option = ''
+    if config['TTN']:
+        option += ' --trim_front2 1 '
+
+    shared_option = '--overrepresentation_analysis --length_required  15 '\
+                '--trim_poly_x --poly_x_min_len 8 '\
+                '{option} 1 --low_complexity_filter --thread {threads} '\
+                '--out1 {trimed1} --out2 {trimed2} '\
+                '--complexity_threshold 30 '\
+                '--html {PREFIX}.html --json {PREFIX}.json '
+                .format(option = option,
+                        threads = params['THREADS'],
+                        trimed1 = output['FQ1'],
+                        trimed2 = output['FQ2'],
+                        prefix = output['FQ1'].split('.')[0])
+                
+        
+    if config['umi'] > 0:
+        command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '\
+                ' --barcodeCutOff=20 --out_file=- -r read1 --min_length 15 ' \
+                '| fastp --stdin --interleaved_in '\
+                '{shared_option} '\
+                .format(file1= input['FQ1'], 
+                        file2= input['FQ2'], 
+                        umi = config['umi']*'X',
+                        shared_option = shared_option)
+
+    else:
+        command = ' fastp --in1 {file2} --in2 {file2} {shared_option} '\
+                .format(file1= input['FQ1'], 
+                        file2= input['FQ2'], 
+                        shared_option = shared_option)
+    
     return command

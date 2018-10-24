@@ -1,6 +1,6 @@
 from collections import defaultdict, Counter
 from pandas import DataFrame
-from tgirt_map.trim_function import trimming
+from tgirt_map.trim_function import atropos_trimming, fastp_trimming
 
 # set up config
 FASTQ1 = config["fastq1"]
@@ -632,6 +632,7 @@ rule trim:
         FQ2 = TRIMMED_FQ2
 
     run:
+        trimming = fastp_trimming if config['fastp'] else atropos_trimming
         command = trimming(config, input, output, params)
         print(command)
         os.system(command)

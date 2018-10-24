@@ -5,7 +5,7 @@ GENOME_PREFIX=hg19_genome
 mkdir -p  $REF_PATH/all_fasta
 
 HG_VERSION=hg19
-if echo $HG_VERSION | grep -v -q 'hg10\|hg38' 
+if echo $HG_VERSION | grep -v -q 'hg19\|hg38' 
 then
 	echo HG version has to be hg38 or hg19
 	exit	

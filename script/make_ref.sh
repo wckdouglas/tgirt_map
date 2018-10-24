@@ -1,92 +1,110 @@
-#!/bin/bash
+REF_PATH=$REF/hg19
+ANNOTATION_PATH=$REF_PATH/new_genes
+GENOME_PATH=$REF_PATH/genome
+GTF_LINK=ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_28/GRCh37_mapping/gencode.v28lift37.annotation.gtf.gz
+tRNA_REF=http://gtrnadb.ucsc.edu/genomes/eukaryota/Hsapi19/hg19-tRNAs.tar.gz
+piRNA=http://www.regulatoryrna.org/database/piRNA/download/archive/v1.0/bed/piR_hg19_v1.0.bed.gz
+MIR_LINK=ftp://mirbase.org/pub/mirbase/CURRENT/hairpin_high_conf.fa.gz
 
-REF_PATH=${REF}/hg19/genome
-GENOME_PREFIX=hg19_genome
-mkdir -p  $REF_PATH/all_fasta
-
-HG_VERSION=hg19
-if echo $HG_VERSION | grep -v -q 'hg19\|hg38' 
-then
-	echo HG version has to be hg38 or hg19
-	exit	
-fi
-
-
-tRNADB=Hsapi$(echo $HG_VERSION | cut -c3-)
-
-#LINKS
-CHROM=http://hgdownload.cse.ucsc.edu/goldenPath/$HG_VERSION/bigZips/chromFa.tar.gz
-GENCODE_GTF=ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_19/gencode.v19.chr_patch_hapl_scaff.annotation.gtf.gz
-tRNA_LINK=http://gtrnadb.ucsc.edu/genomes/eukaryota/$tRNADB/$HG_VERSION-tRNAs.tar.gz
+#annotationes
+curl $GTF_LINK |zcat > $ANNOTATION_PATH/genes.gtf
+cat $ANNOTATION_PATH/genes.gtf \
+    | grep 'protein_coding' --color=no\
+    | gtfToGenePred /dev/stdin /dev/stdout \
+    | genePredToBed > $ANNOTATION_PATH/protein_coding.bed12
+cat $ANNOTATION_PATH/genes.gtf \
+    | grep 'protein_coding' --color=no \
+    | awk '$3=="exon"' \
+    | gtf2bed \
+    | sort -k1,1 -k2,2n -k3,3n -k6,6 -u \
+    > $ANNOTATION_PATH/exons.bed
+hisat2_extract_splice_sites.py $ANNOTATION_PATH/genes.gtf > $ANNOTATION_PATH/splicesites.tsv
+python gtf_to_bed.py $ANNOTATION_PATH/genes.gtf > $ANNOTATION_PATH/genes.bed
 
 
-#Download rRNA
-python get_rRNA_fa.py > $REF_PATH/rRNA.fa
-echo 'gi|23898|emb|X12811.1|  274     394     5S_rRNA 0       +       5S_rRNA 5S_rRNA
-gi|555853|gb|U13369.1|HSU13369  3657    5527    18S_rRNA        0       +       18S_rRNA        18S_rRNA
-gi|555853|gb|U13369.1|HSU13369  6623    6779    5.8S_rRNA       0       +       5.8S_rRNA       5.8S_rRNA
-gi|555853|gb|U13369.1|HSU13369  7935    12969   28S_rRNA        0       +       28S_rRNA        28S_rRNA' \
-		| awk '{print $1,$2,$3,$4,$5,$6,"rDNA",$8}' OFS='\t' \
-			> $REF_PATH/rRNA.bed
-echo 'Made rRNA'
+#piRNA
+curl $piRNA \
+    | zcat \
+    | sort -k1,1 -k2,2n -k3,3n \
+    | awk '{print $0, "piRNA","piRNA"}' OFS='\t' \
+    | bgzip \
+    > $ANNOTATION_PATH/piRNA.bed.gz
+zcat $ANNOTATION_PATH/piRNA.bed.gz >> $ANNOTATION_PATH/genes.bed
 
-# downolad reference
-curl -o $REF_PATH/chroms.tar.gz $CHROM
-tar zxvf $REF_PATH/chroms.tar.gz --directory $REF_PATH/all_fasta
-cat $REF_PATH/all_fasta/*.fa $REF_PATH/rRNA.fa > $REF_PATH/${GENOME_PREFIX}.fa
+#tRNA
+curl $tRNA_REF > $ANNOTATION_PATH/tRNA.tar.gz
+mkdir -p $ANNOTATION_PATH/tRNA
+tar zxvf $ANNOTATION_PATH/tRNA.tar.gz --directory $ANNOTATION_PATH/tRNA
+#python make_tRNA.py \
+#    $ANNOTATION_PATH/tRNA/hg19-tRNAs-detailed.ss \
+#    $ANNOTATION_PATH/tRNA.bed \
+#    $ANNOTATION_PATH/tRNA/nucleo_tRNA.fa
+seqkit  rmdup -s  $ANNOTATION_PATH/tRNA/hg19-mature-tRNAs.fa  \
+    | python process_mature_tRNA.py \
+    > $ANNOTATION_PATH/tRNA/nucleo_tRNA.fa
+cat $ANNOTATION_PATH/tRNA.bed |cut -f1-8 >> $ANNOTATION_PATH/genes.bed
+cat $ANNOTATION_PATH/genes.bed \
+    | grep 'Mt_tRNA' \
+    | bedtools getfasta  -fi $GENOME_PATH/hg19_genome.fa -bed - -s -name -tab \
+    | tr ':' '\t' \
+    | awk '{printf ">%s\n%s\n",$1,$NF}' \
+    | sed 's/(-)//g' | sed 's/(+)//g' \
+    > $ANNOTATION_PATH/tRNA/mt_tRNA.fa
+cat $ANNOTATION_PATH/tRNA/mt_tRNA.fa $ANNOTATION_PATH/tRNA/nucleo_tRNA.fa > $ANNOTATION_PATH/tRNA.fa
 
-#make index
-hisat2-build $REF_PATH/${GENOME_PREFIX}.fa $REF_PATH/${GENOME_PREFIX}
-bowtie2-build $REF_PATH/${GENOME_PREFIX}.fa $REF_PATH/${GENOME_PREFIX}
-bwa index $REF_PATH/${GENOME_PREFIX}.fa
-samtools faidx $REF_PATH/${GENOME_PREFIX}.fa
-echo 'Made genome'
 
-#downolaod annotation
-curl  $GENCODE_GTF | zcat > $REF_PATH/gencode_genes.gtf
-hisat2_extract_splice_sites.py $REF_PATH/gencode_genes.gtf > $REF_PATH/splicesite.tsv
-echo 'Made splice sites'
 
-#make genome file
-python ~/ngs_qc_plot/make_genome.py -f $REF_PATH/${GENOME_PREFIX}.fa -o genome > $REF_PATH/${GENOME_PREFIX}.genome
+#make rRNA
+python get_rRNA.py $GENOME_PATH/hg19_genome.fa $ANNOTATION_PATH/genes.bed \
+            $ANNOTATION_PATH/rRNA_mt.bed $ANNOTATION_PATH/rRNA_mt.fa 
+cat $ANNOTATION_PATH/rRNA_mt.bed | awk '$7!~/Mt/' >> $ANNOTATION_PATH/genes.bed
 
-#make gene bed
-Rscript get_ensemble.R \
-	| cat - $REF_PATH/rRNA.bed > $REF_PATH/genes.bed
-python get_genes.py > $REF_PATH/genes.bed12
-echo 'Downloaded genes.bed'
+python split_bed_for_count.py $ANNOTATION_PATH
 
-#make tRNA
-tRNA_PATH=$REF_PATH/tRNA
-mkdir -p $tRNA_PATH
 
-FILENAME=$(basename $tRNA_LINK)
-curl -o $tRNA_PATH/$FILENAME $tRNA_LINK
-tar zxvf $tRNA_PATH/$FILENAME --directory $tRNA_PATH
-cat $tRNA_PATH/hg19-tRNAs.bed \
-	    | cut -f1-6 \
-		| awk '{print $1, $2,$3,$4,$5,$6,"tRNA",$4}' OFS='\t' \
-		> $tRNA_PATH/tRNA.bed
-cat $tRNA_PATH/tRNA.bed >>  $REF_PATH/genes.bed
-python make_tRNA_fasta.py $tRNA_PATH > $tRNA_PATH/nucleo_tRNA.fa
-cat $REF_PATH/genes.bed \
-	| grep 'Mt_tRNA' \
-	| bedtools getfasta  -fi $REF_PATH/hg19_genome.fa -bed - -s -name -tab \
-	| tr ':' '\t' \
-	| awk '{printf ">%s\n%s\n",$1,$NF}' \
-	> $tRNA_PATH/mt_tRNA.fa
-cat $tRNA_PATH/mt_tRNA.fa $tRNA_PATH/nucleo_tRNA.fa > $REF_PATH/tRNA.fa
-mv $tRNA_PATH/tRNA.bed $REF_PATH
-echo 'Finished making tRNA'
+#make tRNA filter
+cat $ANNOTATION_PATH/tRNA.bed $ANNOTATION_PATH/rmsk_tRNA.bed $REF_PATH/genome/tRNA.bed \
+    | bedtools sort \
+    | bedtools merge -s -o first -c 4,5,6,7,8\
+    > $ANNOTATION_PATH/tRNA_comprehensive.bed
 
-# make index
-cat  $REF_PATH/tRNA.fa $REF_PATH/rRNA.fa \
-		> $REF_PATH/tRNA_rRNA.fa
-bowtie2-build $REF_PATH/tRNA_rRNA.fa $REF_PATH/tRNA_rRNA
-bowtie2-build $REF_PATH/tRNA.fa $REF_PATH/tRNA
-bowtie2-build $REF_PATH/rRNA.fa $REF_PATH/rRNA
-echo 'Indexed tRNA/rRNA'
+#yRNA
+cat $ANNOTATION_PATH/genes.bed \
+    | grep --color=no 'RNY' \
+    | awk '$4!~/[pP]/' \
+    | python get_fa.py $GENOME_PATH/hg19_genome.fa $ANNOTATION_PATH/yRNA.bed $ANNOTATION_PATH/yRNA.fa
 
-#make gene count bed
-python split_bed_for_count.py $REF_PATH
+cat $ANNOTATION_PATH/genes.bed \
+     | awk '$4~/.*7SK$|7SL[0-9]+$/' \
+     | awk '{print $0, $3-$2}' OFS='\t' \
+     | awk  '$NF~/299|330|296/' \
+     | python get_fa.py $GENOME_PATH/hg19_genome.fa $ANNOTATION_PATH/srp.bed $ANNOTATION_PATH/srp.fa
 
+cat $ANNOTATION_PATH/genes.bed \
+    | grep --color=no 'VTRNA' \
+    | awk '$4!~/[pP]/' \
+    | python get_fa.py $GENOME_PATH/hg19_genome.fa $ANNOTATION_PATH/vaultRNA.bed  $ANNOTATION_PATH/vaultRNA.fa
+
+
+curl $MIR_LINK \
+    | seqkit grep -n -r -p 'Homo sapien' \
+    | seqkit replace -s -p 'U' -r 'T' \
+    > $ANNOTATION_PATH/miRNA_hairpin.fa 
+
+
+#make rRNA tRNA
+cat $ANNOTATION_PATH/tRNA.fa \
+    $ANNOTATION_PATH/yRNA.fa\
+    $ANNOTATION_PATH/srp.fa \
+    $ANNOTATION_PATH/miRNA_hairpin.fa \
+    $ANNOTATION_PATH/vaultRNA.fa  \
+    > $ANNOTATION_PATH/smallRNA.fa 
+python smallRNA_bed.py $ANNOTATION_PATH/smallRNA.fa > $ANNOTATION_PATH/smallRNA.bed
+
+cat $ANNOTATION_PATH/tRNA.fa $ANNOTATION_PATH/yRNA.fa > $ANNOTATION_PATH/tRNA_yRNA.fa
+cat $ANNOTATION_PATH/genes.bed | awk '$4~"RNY|Y_RNA"' > $ANNOTATION_PATH/yRNA.bed
+cat $ANNOTATION_PATH/yRNA.bed $ANNOTATION_PATH/tRNA.bed > $ANNOTATION_PATH/tRNA_yRNA.bed
+
+echo made tRNA_rRNA fasta
+bowtie2-build $ANNOTATION_PATH/smallRNA.fa $ANNOTATION_PATH/smallRNA
+bowtie2-build $ANNOTATION_PATH/rRNA_mt.fa $ANNOTATION_PATH/rRNA_mt

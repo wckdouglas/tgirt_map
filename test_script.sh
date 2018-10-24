@@ -18,4 +18,4 @@ tgirt_count.py map \
     --rRNA_mt_index $REF/genes/rRNA_mt --smRNA_index $REF/genes/smallRNA -p 24 \
     --trim_aggressive --repeats rmsk.bed.gz --umi 6 \
     --repeats_index all_rmsk_From_bed \
-    --snakemake --dry 
+    --snakemake 

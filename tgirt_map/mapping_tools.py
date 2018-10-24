@@ -8,6 +8,7 @@ from builtins import map, range
 import re
 import six
 import pandas as pd
+from tgirt_map.trim_function import fastp_trimming, atropos_trimming
 
 class sample_object():
     def __init__(self, args):
@@ -33,6 +34,7 @@ class sample_object():
         self.novel_splice = args.novel_splice
         self.polyA = args.polyA
         self.multi = args.multi
+        self.use_fastp = args.fastp
 
         #### make folder
         self.trim_folder = self.outpath + '/Trim'
@@ -88,87 +90,21 @@ class sample_object():
 
 
     def trimming(self):
-        ''' 
-        atropos detected:
-            read1: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC
-            read2: GATCGTCGGACTGTAGAACTCTGAACGTGTAGATCTCGGTGGTCGCCGTATCATT
-            
-        Include barcode and P5/P7:
-            read1: AGATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTTG
-            read2: GATCGTCGGACTGTAGAACTCTGAACGTGTAGATCTCGGTGGTCGCCGTATCATT
-        '''
-        R2R = 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTTG'
-        R1R = 'GATCGTCGGACTGTAGAACTCTGAACGTGTAGA'
-        R2 = 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT'
-        if self.TTN:
-            option='-U 1'
-            R2R = 'A' + R2R 
-            R2 = re.sub('TCT$','TCTT',R2)
-        else:
-            option = ''
+        trimming = fastp_trimming if self.use_fastp else atropos_trimming
+        confi, input, output, params = {}, {}, {}, {}
+        config['TTN']  = self.TTN
+        config['threads'] = self.threads
+        config['umi'] = self.UMI
+        config['trim_aggressive'] = self.trim_hard
+        config['polyA'] = self.polyA
 
-        #if R2R jumps to R2 RNA, template switch byproduct
-        fwd_byproduct = R2[-14:]
-        rvs_byproduct = R2R[:14]
+        input['FQ1'] = self.fastq1
+        input['FQ2'] = self.fastq2
 
-        
-        #if R2R jimps to R2 RNA or R2R DNA
-        fwd_byproduct += ' -b GCACACGTCTGAACTCCAGTCAC -b {R2} '.format(R2 = R2)
-        rvs_byproduct += ' -B GTGACTGGAGTTCAGACGTGTGC -b {R2R} '.format(R2R = R2R)
-
-        if self.polyA:
-            smart_seq_CDS = 'AAGCAGTGGTATCAACGCAGAGTAC'
-            switch_oligo = 'AGTGGTATCAACGCAGAGTACGGGG'
-
-            fwd_byproduct += ' -a A{100} -a T{100} -g %s -g %s ' %( smart_seq_CDS, switch_oligo)
-            rvs_byproduct += ' -A A{100} -A T{100} -G %s -G %s ' %( smart_seq_CDS, switch_oligo)
-
-
-        single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
-        paired_end_adaptor = single_end_adaptor + \
-                '-A {R1R} '.format(R1R=R1R)
-        shared_options = '--minimum-length=15 --threads={threads} --no-cache-adapters '.format(threads=self.threads)
-        if not self.trim_hard:
-            shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20  --aligner insert '
-
-        else:
-            '''
-                -B anywhere 
-                -G front 
-                -A adapter
-            '''
-            shared_options += '--overlap 5 --nextseq-trim=25 --times=2 --max-n=3 --batch-size 100000 '\
-                            '--error-rate=0.1 --front={front_adapter1} --anywhere={anywhere_adapter1} '\
-                            '-G {front_adapter2} -B {anywhere_adapter2}  --pair-filter both '\
-                            .format(front_adapter1 = R2, anywhere_adapter1 = rvs_byproduct,
-                                     front_adapter2 = R2R, anywhere_adapter2 = fwd_byproduct)  +\
-                            ' -A T{100} -A A{100} -a A{100} -a T{100} '
-
-        if self.UMI == 0:
-            command = 'atropos trim {option} {adaptors} {shared_options} '\
-                        '-o {trimed1} -p {trimed2} -pe1 {file1} -pe2 {file2}'\
-                        .format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options,
-                                trimed1=self.trimed1, trimed2=self.trimed2,
-                                file1= self.fastq1, file2= self.fastq2)
-
-        elif self.UMI > 0:
-            temp = '{trimed1}.temp.gz'.format(trimed1 = self.trimed1)
-            command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '\
-                        ' --barcodeCutOff=20 --out_file={TEMP} -r read1 --min_length 15 ' \
-                    '; atropos trim {option} {shared_options} {adaptors}  '\
-                    '--interleaved-input {TEMP} '\
-                    ' --quiet  --report-file /dev/stderr -f fastq '\
-                    '--interleaved-out /dev/stdout '\
-                    '| deinterleave_fastq.py -1 {trimed1} -2 {trimed2} --min_length 15 ; rm {TEMP}'\
-                    .format(file1= self.fastq1, 
-                            file2= self.fastq2, 
-                            umi=self.UMI*'X',
-                            option=option,
-                            adaptors=paired_end_adaptor, 
-                            shared_options=shared_options,
-                            trimed1=self.trimed1, 
-                            trimed2=self.trimed2,
-                            TEMP = temp)
+        output['FQ1'] = self.trimed1
+        output['FQ2'] = self.trimed2
+        command = trimming(config, input, output)
+    
         self.run_process(command)
 
 

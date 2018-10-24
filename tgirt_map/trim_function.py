@@ -1,6 +1,6 @@
 import re
 
-def atropos_trimming(config, input, output, params):
+def atropos_trimming(config, input, output):
     ''' 
     atropos detected:
         read1: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC
@@ -94,11 +94,10 @@ def atropos_trimming(config, input, output, params):
                         shared_options = shared_options,
                         trimed1 = output['FQ1'], 
                         trimed2 = output['FQ2'])
-#                        TEMP = params['TEMP_FQ'])
     return command
 
 
-def fastp_trimming(config, input, output, params):
+def fastp_trimming(config, input, output):
 
     option = ''
     if config['TTN']:

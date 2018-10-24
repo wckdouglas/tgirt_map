@@ -53,7 +53,7 @@ def atropos_trimming(config, input, output, params):
             -G front 
             -A adapter
         '''
-        shared_options += '--overlap 6 --nextseq-trim=25 --times=2 --max-n=3 '\
+        shared_options += '--overlap 6 --nextseq-trim=25 --times=2 --max-n=3 --quiet -f fastq '\
                         '--error-rate=0.1 --front={front_adapter1} --anywhere={anywhere_adapter1} '\
                         '-G {front_adapter2} -B {anywhere_adapter2} --trim-n '\
                         .format(front_adapter1 = R2, anywhere_adapter1 = rvs_byproduct,
@@ -62,8 +62,11 @@ def atropos_trimming(config, input, output, params):
 
     if config['umi'] == 0:
         command = 'atropos trim {option} {adaptors} {shared_options} '\
-                    '-o {trimed1} -p {trimed2} -pe1 {file1} -pe2 {file2}'\
-                    .format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options,
+                    '-pe1 {file1} -pe2 {file2} --interleaved-out /dev/stdout '\
+                    '| deinterleave_fastq.py -1 {trimed1} -2 {trimed2} --min_length 15 '
+                    .format(option=option, 
+                            adaptors=paired_end_adaptor, 
+                            shared_options=shared_options,
                             trimed1 = output['FQ1'], trimed2 = output['FQ2'],
                             file1 = input['FQ1'], file2 = input['FQ2'])
 
@@ -72,7 +75,6 @@ def atropos_trimming(config, input, output, params):
                     ' --barcodeCutOff=20 --out_file={TEMP} -r read1 --min_length 15 ' \
                 '; atropos trim {option} {shared_options} {adaptors}  '\
                 '--interleaved-input {TEMP} '\
-                ' --quiet  --report-file /dev/stderr -f fastq '\
                 '--interleaved-out /dev/stdout '\
                 '| deinterleave_fastq.py -1 {trimed1} -2 {trimed2} --min_length 15 '\
                 '; rm {TEMP}'\

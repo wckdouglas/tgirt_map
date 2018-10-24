@@ -3,7 +3,6 @@ language:
 python:
     - "3.6"
 # command to install dependencies
-install: 
 install:
     - sudo apt-get update
     # We do this conditionally because it saves us some downloading if the
@@ -31,6 +30,7 @@ install:
     - cd sequencing_tools
     - pip install -r requirements.txt 
     - pip install .
+    - cd ../
 
 
 # test

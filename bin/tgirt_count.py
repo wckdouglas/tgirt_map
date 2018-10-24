@@ -83,9 +83,9 @@ def mapper_args(parser):
     parser.add_argument('--skip_count', action='store_true',  
               help = 'DEBUG: skip counting')
     parser.add_argument('--snakemake', action = 'store_true',
-            help = 'Use snakemake workflow')
+            help = 'Use snakemake workflow (DEBUG options unvailable)')
     parser.add_argument('--fastp', action = 'store_true',
-            help = 'Use fastp for trimming')
+            help = 'Use fastp for trimming (only work with snakemake)')
     #parser.add_argument('--hisat2', default='hisat2',  
     #          help = "PATH to Douglas's version of HISAT2, to allow dovetails")
 

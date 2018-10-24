@@ -29,21 +29,24 @@ def atropos_trimming(config, input, output, params):
     fwd_byproduct += ' -b GCACACGTCTGAACTCCAGTCAC -b {R2} '.format(R2 = R2)
     rvs_byproduct += ' -B GTGACTGGAGTTCAGACGTGTGC -b {R2R} '.format(R2R = R2R)
 
-    if config['polyA']:
+    if config['polyA']: #unstranded
         smart_seq_CDS = 'AAGCAGTGGTATCAACGCAGAGTAC'
         switch_oligo = 'AGTGGTATCAACGCAGAGTACGGGG'
 
-        fwd_byproduct += ' -a A{100} -a T{100} -g %s -g %s ' %( smart_seq_CDS, switch_oligo)
-        rvs_byproduct += ' -A A{100} -A T{100} -G %s -G %s ' %( smart_seq_CDS, switch_oligo)
+        fwd_byproduct = fwd_byproduct + ' -a A{100} -a T{100} ' + ' -g {fwd} -g {rvs} -a {fwd} -a {rvs}  '.format(fwd = smart_seq_CDS, rvs = switch_oligo)
+        rvs_byproduct = rvs_byproduct + ' -A A{100} -A T{100} ' + ' -G {fwd} -G {rvs} -A {fwd} -A {rvs}  '.format(fwd = smart_seq_CDS, rvs = switch_oligo)
 
 
     single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
     paired_end_adaptor = single_end_adaptor + \
             '-A {R1R} '.format(R1R=R1R)
     shared_options = '--minimum-length=15 --threads={threads} --no-cache-adapters '\
-                    '--batch-size 100000 --process-timeout 300 '\
-                    '--pair-filter=both  --report-file {prefix}.txt --op-order WCGQA '\
+                    '--batch-size 1000 --read-queue-size 24000 --result-queue-size 24000'\
+                    ' --process-timeout 300 --progress bar '\
+                    '--pair-filter=any  '\
+                    '--report-file {prefix}.txt --op-order WCGQA '\
             .format(threads = config['threads'], prefix = output['FQ1'].split('.')[0])
+
     if not config['trim_aggressive']:
         shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20  --aligner insert '
 
@@ -53,8 +56,8 @@ def atropos_trimming(config, input, output, params):
             -G front 
             -A adapter
         '''
-        shared_options += '--overlap 6 --nextseq-trim=25 --times=2 --max-n=3 --quiet -f fastq '\
-                        '--error-rate=0.1 --front={front_adapter1} --anywhere={anywhere_adapter1} '\
+        shared_options += '--overlap 5 --nextseq-trim=25 --times=2 --max-n=3 --quiet -f fastq '\
+                        '--error-rate=0.2 --front={front_adapter1} --anywhere={anywhere_adapter1} '\
                         '-G {front_adapter2} -B {anywhere_adapter2} --trim-n '\
                         .format(front_adapter1 = R2, anywhere_adapter1 = rvs_byproduct,
                                     front_adapter2 = R2R, anywhere_adapter2 = fwd_byproduct)  +\
@@ -62,8 +65,8 @@ def atropos_trimming(config, input, output, params):
 
     if config['umi'] == 0:
         command = 'atropos trim {option} {adaptors} {shared_options} '\
-                    '-pe1 {file1} -pe2 {file2} --interleaved-out /dev/stdout '\
-                    '| deinterleave_fastq.py -1 {trimed1} -2 {trimed2} --min_length 15 '
+                    '-pe1 {file1} -pe2 {file2} '\
+                    '-o {trimed1} -p {trimed2} '\
                     .format(option=option, 
                             adaptors=paired_end_adaptor, 
                             shared_options=shared_options,
@@ -72,12 +75,10 @@ def atropos_trimming(config, input, output, params):
 
     elif config['umi'] > 0:
         command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '\
-                    ' --barcodeCutOff=20 --out_file={TEMP} -r read1 --min_length 15 ' \
-                '; atropos trim {option} {shared_options} {adaptors}  '\
-                '--interleaved-input {TEMP} '\
-                '--interleaved-out /dev/stdout '\
-                '| deinterleave_fastq.py -1 {trimed1} -2 {trimed2} --min_length 15 '\
-                '; rm {TEMP}'\
+                    ' --barcodeCutOff=20 --out_file=- -r read1 --min_length 15 ' \
+                '| atropos trim {option} {shared_options} {adaptors}  '\
+                '--interleaved-input /dev/stdin '\
+                '-o {trimed1} -p {trimed2} '\
                 .format(file1= input['FQ1'], 
                         file2= input['FQ2'], 
                         umi = config['umi']*'X',
@@ -85,8 +86,8 @@ def atropos_trimming(config, input, output, params):
                         adaptors = paired_end_adaptor, 
                         shared_options = shared_options,
                         trimed1 = output['FQ1'], 
-                        trimed2 = output['FQ2'],
-                        TEMP = params['TEMP_FQ'])
+                        trimed2 = output['FQ2'])
+#                        TEMP = params['TEMP_FQ'])
     return command
 
 

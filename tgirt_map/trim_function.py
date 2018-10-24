@@ -41,6 +41,7 @@ def atropos_trimming(config, input, output, params):
     paired_end_adaptor = single_end_adaptor + \
             '-A {R1R} '.format(R1R=R1R)
     shared_options = '--minimum-length=15 --threads={threads} --no-cache-adapters '\
+                    ' --no-default-adapters '\
                     '--batch-size 1000 --read-queue-size 24000 --result-queue-size 24000'\
                     ' --process-timeout 300 --progress bar '\
                     '--pair-filter=any  '\
@@ -48,7 +49,7 @@ def atropos_trimming(config, input, output, params):
             .format(threads = config['threads'], prefix = output['FQ1'].split('.')[0])
 
     if not config['trim_aggressive']:
-        shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20  --aligner insert '
+        shared_options += '--error-rate=0.1 --overlap 3 --quality-cutoff=20  --aligner insert '
 
     else:
         '''
@@ -56,12 +57,14 @@ def atropos_trimming(config, input, output, params):
             -G front 
             -A adapter
         '''
-        shared_options += '--overlap 5 --nextseq-trim=25 --times=2 --max-n=3 --quiet -f fastq '\
+        shared_options += '--overlap 8 --nextseq-trim=25 --times=2 --max-n=3 --quiet -f fastq '\
                         '--error-rate=0.15 --front={front_adapter1} --anywhere={anywhere_adapter1} '\
                         '-G {front_adapter2} -B {anywhere_adapter2} --trim-n '\
                         .format(front_adapter1 = R2, anywhere_adapter1 = rvs_byproduct,
-                                    front_adapter2 = R2R, anywhere_adapter2 = fwd_byproduct)  +\
-                        ' -A T{100} -A A{100} -a A{100} -a T{100} '
+                                    front_adapter2 = R2R, anywhere_adapter2 = fwd_byproduct)  
+        for base in 'ACTG':
+            trim_pattern = base + '{100}'
+            shared_options += ' -A {pat} -a {pat} '.format(pat = trim_pattern)
 
     if config['umi'] == 0:
         command = 'atropos trim {option} {adaptors} {shared_options} '\

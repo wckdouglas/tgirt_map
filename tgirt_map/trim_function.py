@@ -41,7 +41,9 @@ def atropos_trimming(config, input, output, params):
     paired_end_adaptor = single_end_adaptor + \
             '-A {R1R} '.format(R1R=R1R)
     shared_options = '--minimum-length=15 --threads={threads} --no-cache-adapters '\
-            .format(threads = config['threads'])
+                    '--batch-size 100000 --process-timeout 300 '\
+                    '--pair-filter=both  --report-file {prefix}.txt --op-order WCGQA '\
+            .format(threads = config['threads'], prefix = output['FQ1'].split('.')[0])
     if not config['trim_aggressive']:
         shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20  --aligner insert '
 
@@ -51,9 +53,9 @@ def atropos_trimming(config, input, output, params):
             -G front 
             -A adapter
         '''
-        shared_options += '--overlap 5 --nextseq-trim=25 --times=2 --max-n=3 --batch-size 100000 '\
+        shared_options += '--overlap 6 --nextseq-trim=25 --times=2 --max-n=3 '\
                         '--error-rate=0.1 --front={front_adapter1} --anywhere={anywhere_adapter1} '\
-                        '-G {front_adapter2} -B {anywhere_adapter2}  --pair-filter both --process-timeout 300 '\
+                        '-G {front_adapter2} -B {anywhere_adapter2} --trim-n '\
                         .format(front_adapter1 = R2, anywhere_adapter1 = rvs_byproduct,
                                     front_adapter2 = R2R, anywhere_adapter2 = fwd_byproduct)  +\
                         ' -A T{100} -A A{100} -a A{100} -a T{100} '

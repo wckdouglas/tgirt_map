@@ -1,6 +1,6 @@
 import re
 
-def trimming(config, input, output, params):
+def atropos_trimming(config, input, output, params):
     ''' 
     atropos detected:
         read1: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC
@@ -97,7 +97,7 @@ def fastp_trimming(config, input, output, params):
                 '{option} 1 --low_complexity_filter --thread {threads} '\
                 '--out1 {trimed1} --out2 {trimed2} '\
                 '--complexity_threshold 30 '\
-                '--html {PREFIX}.html --json {PREFIX}.json '
+                '--html {PREFIX}.html --json {PREFIX}.json '\
                 .format(option = option,
                         threads = params['THREADS'],
                         trimed1 = output['FQ1'],

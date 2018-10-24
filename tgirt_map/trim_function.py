@@ -33,8 +33,12 @@ def atropos_trimming(config, input, output, params):
         smart_seq_CDS = 'AAGCAGTGGTATCAACGCAGAGTAC'
         switch_oligo = 'AGTGGTATCAACGCAGAGTACGGGG'
 
-        fwd_byproduct = fwd_byproduct + ' -a A{100} -a T{100} ' + ' -g {fwd} -g {rvs} -a {fwd} -a {rvs}  '.format(fwd = smart_seq_CDS, rvs = switch_oligo)
-        rvs_byproduct = rvs_byproduct + ' -A A{100} -A T{100} ' + ' -G {fwd} -G {rvs} -A {fwd} -A {rvs}  '.format(fwd = smart_seq_CDS, rvs = switch_oligo)
+        fwd_byproduct = fwd_byproduct + ' -a A{100} -a T{100} -b T{100} -b A{100} ' +\
+                '-g {fwd} -g {rvs} -b {fwd} -b {rvs} -a {fwd} -a {rvs}  '\
+                .format(fwd = smart_seq_CDS, rvs = switch_oligo)
+        rvs_byproduct = rvs_byproduct + ' -A A{100} -A T{100} -B A{100} -B T{100} ' + \
+                '-G {fwd} -G {rvs} -B {fwd} -B {rvs} -A {fwd} -A {rvs}  '\
+                .format(fwd = smart_seq_CDS, rvs = switch_oligo)
 
 
     single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)

@@ -92,14 +92,15 @@ def fastp_trimming(config, input, output, params):
     if config['TTN']:
         option += ' --trim_front2 1 '
 
+    threads = 16 if config['threads'] > 16 else config['threads']
     shared_option = '--overrepresentation_analysis --length_required  15 '\
                 '--trim_poly_x --poly_x_min_len 8 '\
                 '{option} 1 --low_complexity_filter --thread {threads} '\
                 '--out1 {trimed1} --out2 {trimed2} '\
                 '--complexity_threshold 30 '\
-                '--html {PREFIX}.html --json {PREFIX}.json '\
+                '--html {prefix}.html --json {prefix}.json '\
                 .format(option = option,
-                        threads = params['THREADS'],
+                        threads = threads,
                         trimed1 = output['FQ1'],
                         trimed2 = output['FQ2'],
                         prefix = output['FQ1'].split('.')[0])

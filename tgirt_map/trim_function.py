@@ -57,7 +57,7 @@ def atropos_trimming(config, input, output, params):
             -A adapter
         '''
         shared_options += '--overlap 5 --nextseq-trim=25 --times=2 --max-n=3 --quiet -f fastq '\
-                        '--error-rate=0.2 --front={front_adapter1} --anywhere={anywhere_adapter1} '\
+                        '--error-rate=0.15 --front={front_adapter1} --anywhere={anywhere_adapter1} '\
                         '-G {front_adapter2} -B {anywhere_adapter2} --trim-n '\
                         .format(front_adapter1 = R2, anywhere_adapter1 = rvs_byproduct,
                                     front_adapter2 = R2R, anywhere_adapter2 = fwd_byproduct)  +\

@@ -93,8 +93,6 @@ rule download_rmsk:
 
     params:
         LINK = RMSK_LINK
-    
-    params:
         FILTER = test_filter(config['test'])
 
     output:
@@ -144,8 +142,6 @@ rule download_GTF:
 
     params:
         LINK = GTF_LINK
-    
-    params:
         FILTER = test_filter(config['test'])
 
     output:

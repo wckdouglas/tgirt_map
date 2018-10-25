@@ -1,6 +1,6 @@
 from split_bed_for_count import define_pattern
 
-REF_PATH = config['REF_PATH']
+REF_PATH = config['path']
 ANNOTATION_PATH = REF_PATH + '/genes'
 GENOME_PATH = REF_PATH + '/genome'
 GENOME_PREFIX = GENOME_PATH + '/hg19_genome'
@@ -442,13 +442,14 @@ rule download_genome_fa:
     input:  
 
     params:
-        LINK=GENOME_LINK.format(CHROM = '${CHROM}')
+        LINK=GENOME_LINK.format(CHROM = '${CHROM}'),
+        CHROM_REGEX = 'chr[XM]' if config['test'] else 'chr'
 
     output:
         GENOME_FA
 
     shell:
-        "for CHROM in $(curl {params.LINK} | awk '{{print $2}}' | egrep --color=no 'fa.gz$'); "\
+        "for CHROM in $(curl {params.LINK}/md5sum | awk '{{print $2}}' | egrep --color=no 'fa.gz$' | egrep '{params.CHROM_REGEX}'); "\
         'do '\
         'curl {params.LINK}/$CHROM ;'\
-        'done > {output}'
+        'done |zcat > {output}'

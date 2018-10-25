@@ -92,7 +92,7 @@ rule download_rmsk:
     input:
 
     params:
-        LINK = RMSK_LINK
+        LINK = RMSK_LINK,
         FILTER = test_filter(config['test'])
 
     output:
@@ -125,7 +125,7 @@ rule make_rmsk_fa:
 
 rule make_rmsk_index:
     input:
-        RMSK_FA
+        FA = RMSK_FA
     
     params:
         PREFIX = RMSK_PREFX
@@ -141,14 +141,14 @@ rule download_GTF:
     input:
 
     params:
-        LINK = GTF_LINK
+        LINK = GTF_LINK,
         FILTER = test_filter(config['test'])
 
     output:
         GENE_GTF
     
     shell:
-        'curl {params.LINK} {params.FILTER} | zcat > {output}'
+        'curl {params.LINK} |zcat {params.FILTER}  > {output}'
 
 
 rule make_bed12:
@@ -514,8 +514,8 @@ rule download_genome_fa:
         GENOME_FA
 
     shell:
-        "for CHROM in $(curl {params.LINK}/md5sum | awk '{{print $2}}' '\
-            '| egrep --color=no 'fa.gz$' {params.FILTER}); "\
+        "for CHROM in $(curl {params.LINK}/md5sum | awk '{{print $2}}'" \
+            "| egrep --color=no 'fa.gz$' {params.FILTER}); "\
         'do '\
             'curl {params.LINK}/$CHROM ;'\
         'done |zcat '\

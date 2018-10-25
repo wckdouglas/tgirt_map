@@ -1,6 +1,8 @@
 
+# tgirt_map # 
 
-# tgirt_map # [![Build Status](https://travis-ci.org/wckdouglas/tgirt_map.svg?branch=master)](https://travis-ci.org/wckdouglas/tgirt_map)
+[![Build Status](https://travis-ci.org/wckdouglas/tgirt_map.svg?branch=master)](https://travis-ci.org/wckdouglas/tgirt_map)
+
 
 Pipeline for mapping and counting TGIRT RNA-seq
 

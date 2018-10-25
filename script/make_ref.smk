@@ -65,6 +65,12 @@ MIR_LINK = 'ftp://mirbase.org/pub/mirbase/CURRENT/hairpin_high_conf.fa.gz'
 UNI_VEC_LINK = 'ftp://ftp.ncbi.nlm.nih.gov/pub/UniVec/UniVec_Core'
 RMSK_LINK = 'http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz'
 
+def test_filter(test_bool):
+    FILTER = ''
+    if test_bool:
+        FILTER = "| egrep --color=no 'chr[XM]'"
+    return FILTER
+
 
 rule all:
     input:
@@ -88,6 +94,9 @@ rule download_rmsk:
     params:
         LINK = RMSK_LINK
     
+    params:
+        FILTER = test_filter(config['test'])
+
     output:
         RMSK_BED
     
@@ -95,6 +104,7 @@ rule download_rmsk:
         'curl {params.LINK} '\
         '| zcat '\
         "| awk '{{print $6,$7,$8,$11,$NF, $10, $12, $13}}' OFS='\\t' "\
+        "{params.FILTER}" \
         '| sort -k1,1 -k2,2n -k3,3n '\
         '| bgzip '\
         '> {output}'
@@ -135,11 +145,14 @@ rule download_GTF:
     params:
         LINK = GTF_LINK
     
+    params:
+        FILTER = test_filter(config['test'])
+
     output:
         GENE_GTF
     
     shell:
-        'curl {params.LINK} | zcat > {output}'
+        'curl {params.LINK} {params.FILTER} | zcat > {output}'
 
 
 rule make_bed12:
@@ -193,6 +206,7 @@ rule make_gene_bed:
     
     shell:
         'python gtf_to_bed.py {input.GTF} > {output.BED}'
+
 
 rule make_split_bed:
     input:
@@ -498,13 +512,15 @@ rule download_genome_fa:
 
     params:
         LINK=GENOME_LINK.format(CHROM = '${CHROM}'),
-        CHROM_REGEX = 'chr[XM]' if config['test'] else 'chr'
+        FILTER = test_filter(config['test'])
 
     output:
         GENOME_FA
 
     shell:
-        "for CHROM in $(curl {params.LINK}/md5sum | awk '{{print $2}}' | egrep --color=no 'fa.gz$' | egrep '{params.CHROM_REGEX}'); "\
+        "for CHROM in $(curl {params.LINK}/md5sum | awk '{{print $2}}' '\
+            '| egrep --color=no 'fa.gz$' {params.FILTER}); "\
         'do '\
-        'curl {params.LINK}/$CHROM ;'\
-        'done |zcat > {output}'
+            'curl {params.LINK}/$CHROM ;'\
+        'done |zcat '\
+        '> {output}'

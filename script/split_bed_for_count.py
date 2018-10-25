@@ -4,32 +4,6 @@ from __future__ import print_function
 import pandas as pd
 import sys
 
-
-if len(sys.argv) != 2:
-    sys.exit('[usage] python %s <ref path>' %(sys.argv[0]))
-bed_path = sys.argv[1]#'/stor/work/Lambowitz/ref/RNASeqConsortium'
-
-gene_bed = bed_path + '/genes.bed'
-gene_bed = pd.read_table(gene_bed, 
-                         names=['chrom','start','end','gene_name',
-                                 'score','strand','bio_type','gene_id'],
-                         dtype = {'chrom':'str'}) 
-
-
-def filter_bed(type_pattern, filename):
-    bed_file_name = '%s/%s.bed' %(bed_path, filename)
-    if 'rRNA_for_bam_filter' == filename:
-        gene_bed[gene_bed.bio_type.str.contains('rRNA|rDNA')] \
-            .query('bio_type!="Mt_rRNA"') \
-            .to_csv(bed_file_name, header=False, index=False ,sep='\t')
-    elif 'genes_no' not in filename:
-        gene_bed[gene_bed.bio_type.str.contains(type_pattern)] \
-            .to_csv(bed_file_name, header=False, index=False ,sep='\t')
-    else:
-        gene_bed[~gene_bed.bio_type.str.contains(type_pattern)] \
-            .to_csv(bed_file_name, header=False, index=False, sep='\t')
-    print('Written: ', bed_file_name)
-
 def define_pattern():
     patterns = ['miRNA|misc_RNA|snoRNA|snRNA',
                 'protein_coding',
@@ -53,5 +27,36 @@ def define_pattern():
     return pattern_dict
 
 
-for filename, pattern in pattern_dict.items():
-    filter_bed(pattern, filename)
+def main():
+    if len(sys.argv) != 2:
+        sys.exit('[usage] python %s <ref path>' %(sys.argv[0]))
+    bed_path = sys.argv[1]#'/stor/work/Lambowitz/ref/RNASeqConsortium'
+
+    gene_bed = bed_path + '/genes.bed'
+    gene_bed = pd.read_table(gene_bed, 
+                             names=['chrom','start','end','gene_name',
+                                     'score','strand','bio_type','gene_id'],
+                             dtype = {'chrom':'str'}) 
+
+
+    def filter_bed(type_pattern, filename):
+        bed_file_name = '%s/%s.bed' %(bed_path, filename)
+        if 'rRNA_for_bam_filter' == filename:
+            gene_bed[gene_bed.bio_type.str.contains('rRNA|rDNA')] \
+                .query('bio_type!="Mt_rRNA"') \
+                .to_csv(bed_file_name, header=False, index=False ,sep='\t')
+        elif 'genes_no' not in filename:
+            gene_bed[gene_bed.bio_type.str.contains(type_pattern)] \
+                .to_csv(bed_file_name, header=False, index=False ,sep='\t')
+        else:
+            gene_bed[~gene_bed.bio_type.str.contains(type_pattern)] \
+                .to_csv(bed_file_name, header=False, index=False, sep='\t')
+        print('Written: ', bed_file_name)
+
+    
+    for filename, pattern in pattern_dict.items():
+        filter_bed(pattern, filename)
+
+
+if __name__ == '__main__':
+    main()

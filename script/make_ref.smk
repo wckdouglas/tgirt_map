@@ -199,7 +199,7 @@ rule download_piRNA:
         'curl {params.LINK} '\
         '| zcat '\
         '| sort -k1,1 -k2,2n -k3,3n '\
-        "| awk '{print $0, \"piRNA\", \"piRNA\"}' OFS='\t'" \
+        "| awk '{{print $0, \"piRNA\", \"piRNA\"}}' OFS='\t'" \
         '| bgzip '\
         '> {output} ' \
         '; zcat {output} >> {input}'
@@ -227,14 +227,14 @@ rule download_gtRNA:
 rule make_tRNA_bed:
     input:
         BED = GTRNA_BED,
-        BED = GENE_BED
+        GENE_BED = GENE_BED
 
     output:
         BED = tRNA_BED
     
     shell:
         'cp {input.BED} {output.BED} '\
-        ';cat {output.BED} | cut -f1-8 >> {input.BED}'
+        ';cat {output.BED} | cut -f1-8 >> {input.GENE_BED}'
 
 rule make_nucleo_tRNA:
     input:
@@ -246,7 +246,7 @@ rule make_nucleo_tRNA:
     shell:
         'seqkit  rmdup -s  {input.FA} ' \
         '| python process_mature_tRNA.py ' \
-        '> {output.fA}'
+        '> {output.FA}'
 
 
 rule make_mt_tRNA:
@@ -262,7 +262,7 @@ rule make_mt_tRNA:
         "| grep 'Mt_tRNA' "\
         "| bedtools getfasta  -fi {input.FA} -bed - -s -name -tab "\
         " tr ':' '\t' "\
-        "| awk '{printf \">%s\n%s\n\",$1,$NF}' "\
+        "| awk '{{printf \">%s\n%s\n\",$1,$NF}}' "\
         "| sed 's/(-)//g' | sed 's/(+)//g' "\
         "> {output.FA}"
 
@@ -299,12 +299,12 @@ rule get_SRP:
     
     output:
         FA = SRP_FA,
-        BED = SRP_bed
+        BED = SRP_BED
     
     shell:
         'cat {input.BED} '\
         "| awk '$4~/.*7SK$|7SL[0-9]+$/' "\
-        "| awk '{print $0, $3-$2}' OFS='\t' "\
+        "| awk '{{print $0, $3-$2}}' OFS='\t' "\
         "| awk  '$NF~/299|330|296/'" \
         "| python get_fa.py {input.FA} {output.BED} {output.FA}"
 
@@ -451,11 +451,3 @@ rule download_genome_fa:
         "for CHROM in $(curl {params.LINK} | awk '{{print $2}}' | egrep --color=no 'fa.gz$'); "\
         'curl {params.LINK}/$CHROM '\
         '> {output}'
-
-
-
-    
-
-#annotationes
-curl $GTF_LINK |zcat > $ANNOTATION_PATH/genes.gtf
-

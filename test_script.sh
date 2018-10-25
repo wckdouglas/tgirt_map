@@ -1,4 +1,5 @@
 REF=$HOME/ref
+REF=./test_map
 mkdir -p $REF/genome
 for CHROM in chrX chrM
 do
@@ -10,7 +11,7 @@ bowtie2-build $REF/genome/hg19_genome.fa $REF/genome/hg19_genome
 hisat2-build $REF/genome/hg19_genome.fa $REF/genome/hg19_genome
 
 cd script
-bash make_ref.sh $REF
+bash make_ref.sh ../$REF
 cd ../
 
 

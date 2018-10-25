@@ -17,20 +17,20 @@ BED12 = ANNOTATION_PATH + '/protein_coding.bed12'
 
 UniVec_PREFIX = ANNOTATION_PATH + '/UniVec_core'
 UniVec_FA = UniVec_PREFIX + '.fa'
-BOWTIE2_UNIVEC_INDEX = expand(UniVec_PREFIX + '/{NUMBER}.bt2', NUMBER = range(1,5))
+BOWTIE2_UNIVEC_INDEX = expand(UniVec_PREFIX + '.{NUMBER}.bt2', NUMBER = range(1,5))
 
 SMALL_RNA_PREFIX =  ANNOTATION_PATH + '/smallRNA'
 SMALL_RNA_FA = SMALL_RNA_PREFIX + '.fa'
 SMALL_RNA_BED = SMALL_RNA_PREFIX + '.bed'
-BOWTIE2_SMRNA_INDEX = expand(SMALL_RNA_PREFIX + '/{NUMBER}.bt2', NUMBER = range(1,5))
+BOWTIE2_SMRNA_INDEX = expand(SMALL_RNA_PREFIX + '.{NUMBER}.bt2', NUMBER = range(1,5))
 
 mt_rRNA_PREFIX =  ANNOTATION_PATH + '/rRNA_mt'
 mt_rRNA_FA = mt_rRNA_PREFIX + '.fa'
 mt_rRNA_BED = mt_rRNA_PREFIX + '.bed'
-BOWTIE2_mt_rRNA_INDEX = expand(mt_rRNA_PREFIX + '/{NUMBER}.bt2', NUMBER = range(1,5))
+BOWTIE2_mt_rRNA_INDEX = expand(mt_rRNA_PREFIX + '.{NUMBER}.bt2', NUMBER = range(1,5))
 
-tRNA_FA = ANNOTATION_PATH + 'tRNA.fa'
-tRNA_BED = ANNOTATION_PATH + 'tRNA.bed'
+tRNA_FA = ANNOTATION_PATH + '/tRNA.fa'
+tRNA_BED = ANNOTATION_PATH + '/tRNA.bed'
 tRNA_FOLDER = ANNOTATION_PATH + '/tRNA'
 tRNA_ZIP = ANNOTATION_PATH + '/tRNA.tar.gz'
 GTRNA_FA = tRNA_FOLDER + '/hg19-mature-tRNAs.fa'
@@ -39,10 +39,10 @@ MT_tRNA_FA = tRNA_FOLDER + '/mt_tRNA.fa'
 NUCLEO_tRNA_FA = tRNA_FOLDER + '/nucleo_tRNA.fa'
 
 piRNA_BED = ANNOTATION_PATH + '/piRNA.bed.gz'
-yRNA_FA = ANNOTATION_PATH + 'yRNA.fa'
+yRNA_FA = ANNOTATION_PATH + '/yRNA.fa'
 yRNA_BED = ANNOTATION_PATH + '/yRNA.bed'
-SRP_FA = ANNOTATION_PATH + 'srp.fa'
-SRP_BED = ANNOTATION_PATH + 'srp.bed'
+SRP_FA = ANNOTATION_PATH + '/srp.fa'
+SRP_BED = ANNOTATION_PATH + '/srp.bed'
 miRNA_FA = ANNOTATION_PATH + '/miRNA_hairpin.fa'
 vaultRNA_FA = ANNOTATION_PATH + '/vaultRNA.fa'
 vaultRNA_BED = ANNOTATION_PATH + '/vaultRNA.bed'
@@ -199,7 +199,7 @@ rule download_piRNA:
         'curl {params.LINK} '\
         '| zcat '\
         '| sort -k1,1 -k2,2n -k3,3n '\
-        "| awk '{{print $0, \"piRNA\", \"piRNA\"}}' OFS='\t'" \
+        "| awk '{{print $0, \"piRNA\", \"piRNA\"}}' OFS='\\t'" \
         '| bgzip '\
         '> {output} ' \
         '; zcat {output} >> {input}'
@@ -261,8 +261,8 @@ rule make_mt_tRNA:
         'cat {input.BED} '\
         "| grep 'Mt_tRNA' "\
         "| bedtools getfasta  -fi {input.FA} -bed - -s -name -tab "\
-        " tr ':' '\t' "\
-        "| awk '{{printf \">%s\n%s\n\",$1,$NF}}' "\
+        "| tr ':' '\\t' "\
+        "| awk '{{printf \">%s\\n%s\\n\",$1,$NF}}' "\
         "| sed 's/(-)//g' | sed 's/(+)//g' "\
         "> {output.FA}"
 
@@ -304,7 +304,7 @@ rule get_SRP:
     shell:
         'cat {input.BED} '\
         "| awk '$4~/.*7SK$|7SL[0-9]+$/' "\
-        "| awk '{{print $0, $3-$2}}' OFS='\t' "\
+        "| awk '{{print $0, $3-$2}}' OFS='\\t' "\
         "| awk  '$NF~/299|330|296/'" \
         "| python get_fa.py {input.FA} {output.BED} {output.FA}"
 

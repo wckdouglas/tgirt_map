@@ -1,6 +1,6 @@
 REF=$1
 
-REF_PATH=$REF/hg19
+REF_PATH=$REF
 ANNOTATION_PATH=$REF_PATH/genes
 GENOME_PATH=$REF_PATH/genome
 GTF_LINK=ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_28/GRCh37_mapping/gencode.v28lift37.annotation.gtf.gz

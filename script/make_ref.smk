@@ -50,7 +50,7 @@ SPLIT_GENE_BED = expand(ANNOTATION_PATH + '/{NAME}.bed',
                     NAME = list(define_pattern().keys()))
 
 RMSK_PREFX = ANNOTATION_PATH + '/rmsk'
-RMSK_BED = RMSK_PREFX + '.bed'
+RMSK_BED = RMSK_PREFX + '.bed.gz'
 RMSK_FA = RMSK_PREFX + '.fa'
 BOWTIE2_RMSK_INDEX = expand(RMSK_PREFX + '.{NUMBER}.bt2', NUMBER = range(1,5))
 
@@ -63,7 +63,7 @@ tRNA_REF = 'http://gtrnadb.ucsc.edu/genomes/eukaryota/Hsapi19/hg19-tRNAs.tar.gz'
 piRNA = 'http://www.regulatoryrna.org/database/piRNA/download/archive/v1.0/bed/piR_hg19_v1.0.bed.gz'
 MIR_LINK = 'ftp://mirbase.org/pub/mirbase/CURRENT/hairpin_high_conf.fa.gz'
 UNI_VEC_LINK = 'ftp://ftp.ncbi.nlm.nih.gov/pub/UniVec/UniVec_Core'
-RMSK_LINK = '//hgdownload.soe.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz'
+RMSK_LINK = 'http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz'
 
 
 rule all:

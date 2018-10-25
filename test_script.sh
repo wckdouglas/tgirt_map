@@ -13,6 +13,6 @@ tgirt_count.py map \
     --hisat_index $REF/genome/hg19_genome --bowtie2_index $REF/genome/hg19_genome \
     --bedpath $REF/genes --splicesite $REF/genome/splicesites.tsv \
     --rRNA_mt_index $REF/genes/rRNA_mt --smRNA_index $REF/genes/smallRNA -p 3 \
-    --trim_aggressive --repeats rmsk.bed.gz --umi 6 \
-    --repeats_index all_rmsk_From_bed \
+    --trim_aggressive --repeats $REF/genes/rmsk.bed.gz --umi 6 \
+    --repeats_index  $REF/genes/rmsk \
     --snakemake 

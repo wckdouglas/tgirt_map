@@ -1,6 +1,11 @@
 from split_bed_for_count import define_pattern
 
 REF_PATH = config['path']
+try:
+    test = config['test']
+except KeyError:
+    test = False
+
 ANNOTATION_PATH = REF_PATH + '/genes'
 GENOME_PATH = REF_PATH + '/genome'
 GENOME_PREFIX = GENOME_PATH + '/hg19_genome'

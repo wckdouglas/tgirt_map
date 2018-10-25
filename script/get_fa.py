@@ -16,18 +16,21 @@ def get_sequences(pysam_genome_fa, bed_line, out_bed_handle, out_fa_handle):
     gname = fields[3]
     gtype = fields[6]
 
-    seq = pysam_genome_fa.fetch(chrom, start, end).upper()
-    seq = seq if strand == '+' else reverse_complement(seq)
-    gtype = 'Mt_protein' if 'protein_coding' in gtype and gname.startswith('Mt') else gtype
-    
-    print('>{name}\n{seq}'.format(name = gname,seq = seq), file = out_fa_handle)
+    try:
+        seq = pysam_genome_fa.fetch(chrom, start, end).upper()
+        seq = seq if strand == '+' else reverse_complement(seq)
+        gtype = 'Mt_protein' if 'protein_coding' in gtype and gname.startswith('Mt') else gtype
+        
+        print('>{name}\n{seq}'.format(name = gname,seq = seq), file = out_fa_handle)
 
-    bed_line = '{name}\t0\t{gene_end}\t{name}\t0\t+\t{gene_type}\t{gene_id}'
-    print(bed_line.format(name = gname,
-                            gene_end = len(seq),
-                            gene_type = gtype,
-                            gene_id = fields[-1]),
-            file = out_bed_handle)
+        bed_line = '{name}\t0\t{gene_end}\t{name}\t0\t+\t{gene_type}\t{gene_id}'
+        print(bed_line.format(name = gname,
+                                gene_end = len(seq),
+                                gene_type = gtype,
+                                gene_id = fields[-1]),
+                file = out_bed_handle)
+    except KeyError:
+        print('Skipped line: %s' %bed_line,file=sys.stderr)
 
 
 def main():

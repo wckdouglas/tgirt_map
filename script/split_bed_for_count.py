@@ -54,7 +54,7 @@ def main():
         print('Written: ', bed_file_name)
 
     
-    for filename, pattern in pattern_dict.items():
+    for filename, pattern in define_pattern().items():
         filter_bed(pattern, filename)
 
 

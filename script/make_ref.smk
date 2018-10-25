@@ -49,6 +49,11 @@ vaultRNA_BED = ANNOTATION_PATH + '/vaultRNA.bed'
 SPLIT_GENE_BED = expand(ANNOTATION_PATH + '/{NAME}.bed', 
                     NAME = list(define_pattern().keys()))
 
+RMSK_PREFX = ANNOTATION_PATH + '/rmsk'
+RMSK_BED = RMSK_PREFX + '.bed'
+RMSK_FA = RMSK_PREFX + '.fa'
+BOWTIE2_RMSK_INDEX = expand(RMSK_PREFX + '.{NUMBER}.bt2', NUMBER = range(1,5))
+
 
 
 
@@ -58,6 +63,7 @@ tRNA_REF = 'http://gtrnadb.ucsc.edu/genomes/eukaryota/Hsapi19/hg19-tRNAs.tar.gz'
 piRNA = 'http://www.regulatoryrna.org/database/piRNA/download/archive/v1.0/bed/piR_hg19_v1.0.bed.gz'
 MIR_LINK = 'ftp://mirbase.org/pub/mirbase/CURRENT/hairpin_high_conf.fa.gz'
 UNI_VEC_LINK = 'ftp://ftp.ncbi.nlm.nih.gov/pub/UniVec/UniVec_Core'
+RMSK_LINK = '//hgdownload.soe.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz'
 
 
 rule all:
@@ -71,7 +77,56 @@ rule all:
         SPLIT_GENE_BED,
         piRNA_BED,
         EXONS,
-        SPLICE_SITE
+        SPLICE_SITE,
+        BOWTIE2_RMSK_INDEX,
+        RMSK_BED
+
+#### make RMSK ###
+rule download_rmsk:
+    input:
+
+    params:
+        LINK = RMSK_LINK
+    
+    output:
+        RMSK_BED
+    
+    shell:
+        'curl {params.LINK} '\
+        '| zcat '\
+        "| awk '{{print $6,$7,$8,$11,$NF, $10, $12, $13}}' OFS='\\t' "\
+        '| sort -k1,1 -k2,2n -k3,3n '\
+        '| bgzip '\
+        '> {output}'
+
+rule make_rmsk_fa:
+    input:
+        FA = GENOME_FA,
+        BED = RMSK_BED
+
+    params:
+
+    output:
+        RMSK_FA
+    
+    shell:
+        'bedtools getfasta -fi {input.FA} -bed {input.BED} -s -name '\
+        '| seqkit rmdup -n '\
+        '| seqkit rmdup -s '\
+        '> {output}'
+
+rule make_rmsk_index:
+    input:
+        RMSK_FA
+    
+    params:
+        PREFIX = RMSK_PREFX
+
+    output:
+        BOWTIE2_RMSK_INDEX
+
+    shell:
+        'bowtie2-build {input.FA} {params.PREFIX}'
 
 #### make genes ####
 rule download_GTF:

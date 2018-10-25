@@ -449,5 +449,6 @@ rule download_genome_fa:
 
     shell:
         "for CHROM in $(curl {params.LINK} | awk '{{print $2}}' | egrep --color=no 'fa.gz$'); "\
-        'curl {params.LINK}/$CHROM '\
-        '> {output}'
+        'do '\
+        'curl {params.LINK}/$CHROM ;'\
+        'done > {output}'

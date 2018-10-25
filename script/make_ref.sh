@@ -41,6 +41,7 @@ tar zxvf $ANNOTATION_PATH/tRNA.tar.gz --directory $ANNOTATION_PATH/tRNA
 #    $ANNOTATION_PATH/tRNA/hg19-tRNAs-detailed.ss \
 #    $ANNOTATION_PATH/tRNA.bed \
 #    $ANNOTATION_PATH/tRNA/nucleo_tRNA.fa
+cp $ANNOTATION_PATH/tRNA/hg19-tRNAs.bed $ANNOTATION_PATH/tRNA.bed
 seqkit  rmdup -s  $ANNOTATION_PATH/tRNA/hg19-mature-tRNAs.fa  \
     | python process_mature_tRNA.py \
     > $ANNOTATION_PATH/tRNA/nucleo_tRNA.fa
@@ -65,10 +66,10 @@ python split_bed_for_count.py $ANNOTATION_PATH
 
 
 #make tRNA filter
-cat $ANNOTATION_PATH/tRNA.bed $ANNOTATION_PATH/rmsk_tRNA.bed $REF_PATH/genome/tRNA.bed \
-    | bedtools sort \
-    | bedtools merge -s -o first -c 4,5,6,7,8\
-    > $ANNOTATION_PATH/tRNA_comprehensive.bed
+#cat $ANNOTATION_PATH/tRNA.bed $ANNOTATION_PATH/rmsk_tRNA.bed $REF_PATH/genome/tRNA.bed \
+#    | bedtools sort \
+#    | bedtools merge -s -o first -c 4,5,6,7,8\
+#    > $ANNOTATION_PATH/tRNA_comprehensive.bed
 
 #yRNA
 cat $ANNOTATION_PATH/genes.bed \

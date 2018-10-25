@@ -2,10 +2,10 @@ REF=$HOME/ref
 mkdir -p $REF/genome
 curl  http://hgdownload.soe.ucsc.edu/goldenPath/hg19/chromosomes/chrX.fa.gz \
     | zcat \
-    > $REF/hg19_genome.fa
+    > $REF/genome/hg19_genome.fa
 
-bowtie2-build $REF/hg19_genome.fa $REF/hg19_genome
-hisat2-build $REF/hg19_genome.fa $REF/hg19_genome
+bowtie2-build $REF/genome/hg19_genome.fa $REF/genome/hg19_genome
+hisat2-build $REF/genome/hg19_genome.fa $REF/genome/hg19_genome
 
 cd script
 bash make_ref.sh $REF

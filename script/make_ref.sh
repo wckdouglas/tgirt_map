@@ -6,6 +6,7 @@ GTF_LINK=ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_28/GRCh
 tRNA_REF=http://gtrnadb.ucsc.edu/genomes/eukaryota/Hsapi19/hg19-tRNAs.tar.gz
 piRNA=http://www.regulatoryrna.org/database/piRNA/download/archive/v1.0/bed/piR_hg19_v1.0.bed.gz
 MIR_LINK=ftp://mirbase.org/pub/mirbase/CURRENT/hairpin_high_conf.fa.gz
+UNI_VEC_LINK=ftp://ftp.ncbi.nlm.nih.gov/pub/UniVec/UniVec_Core
 
 #annotationes
 curl $GTF_LINK |zcat > $ANNOTATION_PATH/genes.gtf
@@ -107,5 +108,8 @@ cat $ANNOTATION_PATH/genes.bed | awk '$4~"RNY|Y_RNA"' > $ANNOTATION_PATH/yRNA.be
 cat $ANNOTATION_PATH/yRNA.bed $ANNOTATION_PATH/tRNA.bed > $ANNOTATION_PATH/tRNA_yRNA.bed
 
 echo made tRNA_rRNA fasta
+
+curl $UNI_VEC_LINK > $ANNOTATION_PATH/UniVec_core.fa
 bowtie2-build $ANNOTATION_PATH/smallRNA.fa $ANNOTATION_PATH/smallRNA
 bowtie2-build $ANNOTATION_PATH/rRNA_mt.fa $ANNOTATION_PATH/rRNA_mt
+bowtie2-build $ANNOTATION_PATH/UniVec_core.fa $ANNOTATION_PATH/UniVec_core

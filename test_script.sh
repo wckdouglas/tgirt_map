@@ -6,9 +6,9 @@ cd $WORKING_DIR
 
 
 tgirt_count.py map \
-    -1 test_map/test.1.fq.gz \
-    -2 test_map/test.2.fq.gz \
-    --outdir test_map/test_result \
+    -1 $WORKING_DIR/data/test.1.fq.gz \
+    -2 $WORKING_DIR/data/test.2.fq.gz \
+    --outdir $WORKING_DIR/test_result \
     --samplename test --univec $REF/genes/UniVec_core \
     --hisat_index $REF/genome/hg19_genome --bowtie2_index $REF/genome/hg19_genome \
     --bedpath $REF/genes --splicesite $REF/genome/splicesites.tsv \

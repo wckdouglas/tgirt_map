@@ -1,18 +1,5 @@
 REF=$HOME/ref
-REF=./test_map
-mkdir -p $REF/genome
-for CHROM in chrX chrM
-do
-    curl  http://hgdownload.soe.ucsc.edu/goldenPath/hg19/chromosomes/${CHROM}.fa.gz \
-        | zcat 
-done > $REF/genome/hg19_genome.fa
-
-bowtie2-build $REF/genome/hg19_genome.fa $REF/genome/hg19_genome
-hisat2-build $REF/genome/hg19_genome.fa $REF/genome/hg19_genome
-
-cd script
-bash make_ref.sh ../$REF
-cd ../
+snakemake -s script/make_ref.smk -p -j 4 --config test=1 path=$REF
 
 
 tgirt_count.py map \

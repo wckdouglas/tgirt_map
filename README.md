@@ -1,5 +1,4 @@
-
-# tgirt_map # 
+# TGIRT-map # 
 
 [![Build Status](https://travis-ci.org/wckdouglas/tgirt_map.svg?branch=master)](https://travis-ci.org/wckdouglas/tgirt_map)
 

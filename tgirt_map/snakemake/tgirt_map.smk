@@ -76,6 +76,7 @@ PRIMARY_SNC_BAM = COMBINED_FOLDER + '/sncRNA.bam'
 PRIMARY_rRNA_BAM = COMBINED_FOLDER + '/rRNA_primary.bam'
 PRIMARY_tRNA_BAM = COMBINED_FOLDER + '/tRNA_primary.bam'
 PRIMARY_NO_SNC_BAM = COMBINED_FOLDER + '/primary_no_sncRNA_tRNA_rRNA.bam'
+PRIMARY_NO_SNC_REPEAT_BAM = COMBINED_FOLDER + '/primary_no_sncRNA_tRNA_rRNA_repeats.bam'
 PRIMARY_REPEAT_BAM = COMBINED_FOLDER + '/repeats.bam'
 PRIMARY_SNC_BED = COMBINED_FOLDER + '/sncRNA.bed'
 PRIMARY_BED = COMBINED_FOLDER + '/primary_no_sRNAs.bed'
@@ -136,7 +137,8 @@ rule all:
         REPEAT_COUNT_FILE,
         SNC_RNA_COUNT,
         UNIVEC_COUNT,
-        mt_rRNA_COUNT
+        mt_rRNA_COUNT,
+        PRIMARY_NO_SNC_REPEAT_BAM,
 
 rule generate_all_count:
     input:
@@ -223,6 +225,22 @@ rule count_repeats:
                 for strand, value in strand_dict.items():
                     print('%s\t%s\t%i' %(repeat_name, strand, value), file=count_file)
 
+
+rule filter_repeats:
+    input:
+        PRIMARY_NO_SNC_BAM
+
+    params:
+        BED = RMSK
+
+    output:
+        PRIMARY_NO_SNC_REPEAT_BAM
+    
+    shell:
+        'bedtools pairtobed -type neither '\
+        '-abam {input} '\
+        '-b {params.BED}'
+        '> {output}'
 
 rule make_repeat_bed:
     input:

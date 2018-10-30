@@ -4,7 +4,7 @@ REF_PATH = config['path']
 try:
     test = config['test']
 except KeyError:
-    test = False
+    config['test'] = 0
 
 ANNOTATION_PATH = REF_PATH + '/genes'
 GENOME_PATH = REF_PATH + '/genome'
@@ -272,7 +272,7 @@ rule download_piRNA:
         "| awk '{{print $0, \"piRNA\", \"piRNA\"}}' OFS='\\t'" \
         '| bgzip '\
         '> {output} ' \
-        '; ccat {output}| zcat >> {input}'
+        '; cat {output}| zcat >> {input}'
 
 
 

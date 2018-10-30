@@ -19,14 +19,12 @@ install:
     - conda info -a
     - conda config --add channels r
     - conda config --add channels bioconda
-    - conda config --add channels auto
-    - conda config --add channels conda-forge
 
     # Replace dep1 dep2 ... with your dependencies
     - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION  
         pandas biopython cython numpy networkx seaborn pyBigwig six pysam ujson 
         hisat2 bowtie2=2.2.5 bedtools samtools snakemake bedtools atropos seqkit
-        xopen ucsc-gtftogenepred ucsc-genePredToBed bedops
+        xopen ucsc-gtftogenepred ucsc-genePredToBed bedops xopen
     - source activate test-environment
     - pip install .
     - git clone https://github.com/wckdouglas/sequencing_tools.git

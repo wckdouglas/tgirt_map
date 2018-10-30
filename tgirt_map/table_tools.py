@@ -90,7 +90,7 @@ def readSample(project_path, sample_id):
     smallRNA_df = read_direct_counts(smallRNA)
 
     rRNA_mt = project_path + '/' + sample_id + '/rRNA_mt/aligned.count'
-    rRNA_mt_df = read_direct_counts(rRNA_mt)
+    rRNA_mt_df = readDF(rRNA_mt)
 
     df = pd.concat([df, smallRNA_df, rRNA_mt_df],axis=0, sort=True) \
         .assign(sample_name = sample_id.replace('-','_'))  \

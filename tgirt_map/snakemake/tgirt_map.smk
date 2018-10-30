@@ -538,7 +538,7 @@ rule count_rRNA_align:
     output:
         COUNT = mt_rRNA_COUNT
 
-    run:
+    shell:
         'bedtools coverage -a {params.GENE_MODEL} -b {input.bed} '\
         '-counts -s > {output.COUNT}'
 

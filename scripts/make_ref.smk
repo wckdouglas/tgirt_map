@@ -73,7 +73,7 @@ RMSK_LINK = 'http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz
 def test_filter(test_bool):
     FILTER = ''
     if test_bool:
-        FILTER = "| egrep --color=no 'chr[XM]'"
+        FILTER = "| egrep --color=no 'chr[YM]'"
     return FILTER
 
 
@@ -272,7 +272,7 @@ rule download_piRNA:
         "| awk '{{print $0, \"piRNA\", \"piRNA\"}}' OFS='\\t'" \
         '| bgzip '\
         '> {output} ' \
-        '; zcat {output} >> {input}'
+        '; ccat {output}| zcat >> {input}'
 
 
 

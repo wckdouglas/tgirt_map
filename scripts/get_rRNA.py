@@ -39,10 +39,13 @@ with xopen(out_fa, 'w') as fa, xopen(out_bed, 'w') as bed:
     genome_fa = pysam.Fastafile(genome)
     in_bed = open(in_bed)
 
+    print('>chrM\n{seq}'.format(seq = genome_fa['chrM']) , file = fa)
     for gene in in_bed:
         fields = gene.strip().split('\t')
+        chrom = fields[0]
         gname = fields[3]
         gtype = fields[6]
-        if gname.startswith('MT-') and not gtype.endswith('tRNA'):
-            get_sequences(genome_fa, gene, bed, fa)
+        if chrom == "chrM": # and not gtype.endswith('tRNA'):
+#            get_sequences(genome_fa, gene, bed, fa)
+            print(gene.strip(), file = bed)
 

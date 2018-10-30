@@ -11,6 +11,11 @@ Pipeline for mapping and counting TGIRT RNA-seq
 pip install git+https://github.com/wckdouglas/tgirt_map.git
 ```
 
+### prepare references ###
+```
+cd scripts
+snakemake -s scripts/make_ref.smk -p -j2 
+```
 
 ### Usage ###
 

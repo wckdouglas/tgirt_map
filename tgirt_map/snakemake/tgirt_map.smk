@@ -530,13 +530,17 @@ rule smallRNA_align:
 #### MT rRNA FILTER ####
 rule count_rRNA_align:
     input:
-        mt_rRNA_MAPPED_BED
+        BED = mt_rRNA_MAPPED_BED
+
+    params:
+        GENE_MODEL = BEDPATH + '/rRNA_mt.bed'
 
     output:
-        mt_rRNA_COUNT
+        COUNT = mt_rRNA_COUNT
 
     run:
-        count_bed(input[0], output[0])
+        'bedtools coverage -a {params.GENE_MODEL} -b {input.bed} '\
+        '-counts -s > {output.COUNT}'
 
 
 

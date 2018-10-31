@@ -63,6 +63,7 @@ def mapper_args(parser):
               help = "Repeat mask BED file, recount repeat masks if a BED file is given (default: null)")
     parser.add_argument('--repeats_index', default=None,
               help = "Bowtie2 index of repeat mask fasta file (default: null)")
+    parser.add_argument('--rerun', action='store_true', help = "Rerun existing files")
     parser.add_argument('--dry', action='store_true', help = "DEBUG: Dry run")
 #    parser.add_argument('--skip_trim', action='store_true',  
 #              help = 'DEBUG: skip trimming')
@@ -114,7 +115,10 @@ def getopt():
 def snake_map(args):
 
     snakefile_dir = pkg_resources.resource_filename('tgirt_map', 'snakemake')
-    options = 'snakemake -s {}/tgirt_map.smk -Fp -j 24 --config '.format(snakefile_dir)
+    force = ''
+    if args.rerun:
+        force = '-F'
+    options = 'snakemake -s {}/tgirt_map.smk {} -p -j 24 --config '.format(snakefile_dir, force)
     for key, value in vars(args).items():
         if key != "subcommand":
             if value == True:

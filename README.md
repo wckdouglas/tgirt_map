@@ -16,7 +16,7 @@ Using conda to create an environment
 conda config --add channels r
 conda config --add channels bioconda
 
-conda create -q -n tgirt_map python=python3 \  
+conda create -q -n tgirt_map python=3.6 \  
         pandas biopython cython numpy networkx seaborn pyBigwig six pysam ujson \
         hisat2 bowtie2=2.2.5 bedtools samtools snakemake bedtools atropos seqkit \
         xopen ucsc-gtftogenepred ucsc-genePredToBed bedops xopen 

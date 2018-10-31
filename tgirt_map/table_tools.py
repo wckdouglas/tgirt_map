@@ -39,9 +39,11 @@ def change_gene_type(x):
     return type
 
 def readDF(count_file_name):
-    df = pd.read_table(count_file_name, header=None)  \
-        .pipe(lambda d: d[[3,6,7,8]])
-    df.columns = ['name','type','id','count']
+    column_names = ['chroms','name','type','id','count']
+    df = pd.read_table(count_file_name, 
+                    names = column_names,
+                    usecols = [0, 3,6,7,8]) \
+        .pipe(lambda d: d[~((d['chrom'].str.contains('^chrM$|^[mM][tT]$')) & (d['type']=="piRNA") )])
     return df
 
 

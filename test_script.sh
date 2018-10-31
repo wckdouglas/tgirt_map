@@ -14,5 +14,4 @@ tgirt_count.py map \
     --bedpath $REF/genes --splicesite $REF/genome/splicesites.tsv \
     --rRNA_mt_index $REF/genes/rRNA_mt --smRNA_index $REF/genes/smallRNA -p 3 \
     --trim_aggressive --repeats $REF/genes/rmsk.bed.gz --umi 6 \
-    --repeats_index  $REF/genes/rmsk \
-    --snakemake 
+    --repeats_index  $REF/genes/rmsk 

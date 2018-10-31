@@ -649,8 +649,8 @@ rule trim:
         FQ2 = TRIMMED_FQ2
 
     run:
-        trimming = fastp_trimming if config['fastp'] else atropos_trimming
-        command = trimming(config, input, output)
+        #trimming = fastp_trimming if config['fastp'] else atropos_trimming
+        command = atropos_trimming(config, input, output)
         print(command)
         os.system(command)
 

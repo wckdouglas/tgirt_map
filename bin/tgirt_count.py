@@ -64,28 +64,28 @@ def mapper_args(parser):
     parser.add_argument('--repeats_index', default=None,
               help = "Bowtie2 index of repeat mask fasta file (default: null)")
     parser.add_argument('--dry', action='store_true', help = "DEBUG: Dry run")
-    parser.add_argument('--skip_trim', action='store_true',  
-              help = 'DEBUG: skip trimming')
-    parser.add_argument('--skip_univec', action='store_true',  
-              help = 'DEBUG: skip univec filter')
-    parser.add_argument('--skip_smRNA', action='store_true',  
-              help = 'DEBUG: skip smallRNA filter')
-    parser.add_argument('--skip_premap', action='store_true',  
-              help = 'DEBUG: skip premapping tRNA and rRNA')
-    parser.add_argument('--skip_hisat', action='store_true',  
-              help = 'DEBUG: skip hisat')
-    parser.add_argument('--skip_bowtie', action='store_true',  
-              help = 'DEBUG: skip bowtie')
-    parser.add_argument('--skip_post_process_bam', action='store_true',  
-              help = 'DEBUG: skip combining BAM, multimap reassignment and BED file conversion')
-    parser.add_argument('--skip_remap', action='store_true',  
-              help = 'DEBUG: skip tRNA/rRNA remapping')
-    parser.add_argument('--skip_count', action='store_true',  
-              help = 'DEBUG: skip counting')
-    parser.add_argument('--snakemake', action = 'store_true',
-            help = 'Use snakemake workflow (DEBUG options unvailable)')
-    parser.add_argument('--fastp', action = 'store_true',
-            help = 'Use fastp for trimming (only work with snakemake)')
+#    parser.add_argument('--skip_trim', action='store_true',  
+#              help = 'DEBUG: skip trimming')
+#    parser.add_argument('--skip_univec', action='store_true',  
+#              help = 'DEBUG: skip univec filter')
+#    parser.add_argument('--skip_smRNA', action='store_true',  
+#              help = 'DEBUG: skip smallRNA filter')
+#    parser.add_argument('--skip_premap', action='store_true',  
+#              help = 'DEBUG: skip premapping tRNA and rRNA')
+#    parser.add_argument('--skip_hisat', action='store_true',  
+#              help = 'DEBUG: skip hisat')
+#    parser.add_argument('--skip_bowtie', action='store_true',  
+#              help = 'DEBUG: skip bowtie')
+#    parser.add_argument('--skip_post_process_bam', action='store_true',  
+#              help = 'DEBUG: skip combining BAM, multimap reassignment and BED file conversion')
+#    parser.add_argument('--skip_remap', action='store_true',  
+#              help = 'DEBUG: skip tRNA/rRNA remapping')
+#    parser.add_argument('--skip_count', action='store_true',  
+#              help = 'DEBUG: skip counting')
+#    parser.add_argument('--snakemake', action = 'store_true',
+#            help = 'Use snakemake workflow (DEBUG options unvailable)')
+#    parser.add_argument('--fastp', action = 'store_true',
+#            help = 'Use fastp for trimming (only work with snakemake)')
     #parser.add_argument('--hisat2', default='hisat2',  
     #          help = "PATH to Douglas's version of HISAT2, to allow dovetails")
 
@@ -188,10 +188,10 @@ def tgirtmap(args):
 def main():
     args = getopt()
     if args.subcommand == 'map':
-        if args.snakemake:
-            snake_map(args)
-        else:
-            tgirtmap(args)
+#        if args.snakemake:
+        snake_map(args)
+#        else:
+#            tgirtmap(args)
     
     elif args.subcommand == 'table':
         make_table(args.project_path)

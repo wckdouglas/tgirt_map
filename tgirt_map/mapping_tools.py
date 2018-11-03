@@ -114,7 +114,8 @@ class sample_object():
         
         #if R2R jimps to R2 RNA or R2R DNA
         fwd_byproduct += ' -b GCACACGTCTGAACTCCAGTCAC -b {R2} '.format(R2 = R2)
-        rvs_byproduct += ' -B GTGACTGGAGTTCAGACGTGTGC -b {R2R} '.format(R2R = R2R)
+        #rvs_byproduct += ' -B GTGACTGGAGTTCAGACGTGTGC -b {R2R} '.format(R2R = R2R)
+        rvs_byproduct += ' -b {R2R} '.format(R2R = R2R)
 
         if self.polyA:
             smart_seq_CDS = 'AAGCAGTGGTATCAACGCAGAGTAC'

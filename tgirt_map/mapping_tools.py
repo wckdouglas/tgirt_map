@@ -8,6 +8,7 @@ from builtins import map, range
 import re
 import six
 import pandas as pd
+from tgirt_map.trim_function import fastp_trimming, atropos_trimming
 
 class sample_object():
     def __init__(self, args):
@@ -33,6 +34,7 @@ class sample_object():
         self.novel_splice = args.novel_splice
         self.polyA = args.polyA
         self.multi = args.multi
+        self.use_fastp = args.fastp
 
         #### make folder
         self.trim_folder = self.outpath + '/Trim'
@@ -41,7 +43,7 @@ class sample_object():
         self.count_rmsk = self.count_folder + '/repeat_RAW'
 
         #define sample folder
-        self.samplename = re.sub('.fastq|.gz|.fq','',self.fastq1.split('/')[-1])
+        self.samplename = args.samplename
         self.sample_folder = self.outpath + '/' + self.samplename
         self.hisat_out = self.sample_folder + '/Hisat'
         self.rRNA_mt_out = self.sample_folder + '/rRNA_mt'
@@ -68,9 +70,9 @@ class sample_object():
                 ' --new-summary --dta --mp 4,2 '\
                 '-p {threads} '.format(threads = self.threads) 
         
-        self.BOWTIE2 = ' bowtie2 --score-min G,1,10 ' \
+        self.BOWTIE2 = ' bowtie2  ' \
                 '--very-sensitive-local ' \
-                '-L 8 -i S,1,0.50 --mp 4,2 -N 1 '\
+                '-L 8  --mp 4,2 -N 1 '\
                 '--no-mixed --no-discordant --dovetail '\
                 '-p {threads}'.format(threads = self.threads)
 
@@ -88,84 +90,21 @@ class sample_object():
 
 
     def trimming(self):
-        ''' 
-        atropos detected:
-            read1: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC
-            read2: GATCGTCGGACTGTAGAACTCTGAACGTGTAGATCTCGGTGGTCGCCGTATCATT
-            
-        Include barcode and P5/P7:
-            read1: AGATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTTG
-            read2: GATCGTCGGACTGTAGAACTCTGAACGTGTAGATCTCGGTGGTCGCCGTATCATT
-        '''
-        R2R = 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCACNNNNNNATCTCGTATGCCGTCTTCTGCTTG'
-        R1R = 'GATCGTCGGACTGTAGAACTCTGAACGTGTAGA'
-        R2 = 'GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT'
-        if self.TTN:
-            option='-U 1'
-            R2R = 'A' + R2R 
-            R2 = re.sub('TCT$','TCTT',R2)
-        else:
-            option = ''
+        trimming = fastp_trimming if self.use_fastp else atropos_trimming
+        config, input, output, params = {}, {}, {}, {}
+        config['TTN']  = self.TTN
+        config['threads'] = self.threads
+        config['umi'] = self.UMI
+        config['trim_aggressive'] = self.trim_hard
+        config['polyA'] = self.polyA
 
-        #if R2R jumps to R2 RNA, template switch byproduct
-        fwd_byproduct = R2[-14:]
-        rvs_byproduct = R2R[:14]
+        input['FQ1'] = self.fastq1
+        input['FQ2'] = self.fastq2
 
-        
-        #if R2R jimps to R2 RNA or R2R DNA
-        fwd_byproduct += ' -b GCACACGTCTGAACTCCAGTCAC -b {R2} '.format(R2 = R2)
-        #rvs_byproduct += ' -B GTGACTGGAGTTCAGACGTGTGC -b {R2R} '.format(R2R = R2R)
-        rvs_byproduct += ' -b {R2R} '.format(R2R = R2R)
-
-        if self.polyA:
-            smart_seq_CDS = 'AAGCAGTGGTATCAACGCAGAGTAC'
-            switch_oligo = 'AGTGGTATCAACGCAGAGTACGGGG'
-
-            fwd_byproduct += ' -a A{100} -a T{100} -g %s -g %s ' %( smart_seq_CDS, switch_oligo)
-            rvs_byproduct += ' -A A{100} -A T{100} -G %s -G %s ' %( smart_seq_CDS, switch_oligo)
-
-
-        single_end_adaptor = '--adapter={R2R} '.format(R2R=R2R)
-        paired_end_adaptor = single_end_adaptor + \
-                '-A {R1R} '.format(R1R=R1R)
-        shared_options = '--minimum-length=15 --threads={threads} --no-cache-adapters '.format(threads=self.threads)
-        if not self.trim_hard:
-            shared_options += '--error-rate=0.1 --overlap 5 --quality-cutoff=20  --aligner insert '
-
-        else:
-            '''
-                -B anywhere 
-                -G front 
-                -A adapter
-            '''
-            shared_options += '--overlap 3 --nextseq-trim=25 --times=2 --max-n=3 '\
-                            '--error-rate=0.2 --front={front_adapter1} --anywhere={anywhere_adapter1} '\
-                            '-G {front_adapter2} -B {anywhere_adapter2} '\
-                            .format(front_adapter1 = R2, anywhere_adapter1 = rvs_byproduct,
-                                     front_adapter2 = R2R, anywhere_adapter2 = fwd_byproduct)  +\
-                            ' -A T{100} -A A{100} -a A{100} -a T{100} '
-
-        if self.UMI == 0:
-            command = 'atropos trim {option} {adaptors} {shared_options} '\
-                        '-o {trimed1} -p {trimed2} -pe1 {file1} -pe2 {file2}'\
-                        .format(option=option, adaptors=paired_end_adaptor, shared_options=shared_options,
-                                trimed1=self.trimed1, trimed2=self.trimed2,
-                                file1= self.fastq1, file2= self.fastq2)
-
-        elif self.UMI > 0:
-            command = 'clip_fastq.py --fastq1={file1} --fastq2={file2} --idxBase={umi} '\
-                        ' --barcodeCutOff=20 --out_file=- -r read1 ' \
-                    ' | atropos trim {option} {shared_options} {adaptors}  --interleaved-input - '\
-                    ' --interleaved-output - --quiet  --report-file /dev/stderr -f fastq '\
-                    ' | deinterleave_fastq.py -i - -1 {trimed1} -2 {trimed2} '\
-                    .format(file1= self.fastq1, 
-                            file2= self.fastq2, 
-                            umi=self.UMI*'X',
-                            option=option,
-                            adaptors=paired_end_adaptor, 
-                            shared_options=shared_options,
-                            trimed1=self.trimed1, 
-                            trimed2=self.trimed2)
+        output['FQ1'] = self.trimed1
+        output['FQ2'] = self.trimed2
+        command = trimming(config, input, output)
+    
         self.run_process(command)
 
 
@@ -181,8 +120,8 @@ class sample_object():
             RNA_filter_out = self.smRNA_out
             index = self.smRNA_index
 
-        self.filtered_fq1 = RNA_filter_out + '/filtered.1.fq'
-        self.filtered_fq2 = RNA_filter_out + '/filtered.2.fq'
+        self.filtered_fq1 = RNA_filter_out + '/filtered.1.fq.gz'
+        self.filtered_fq2 = RNA_filter_out + '/filtered.2.fq.gz'
         _input = '-1 {trimmed1} -2 {trimmed2}'.format(trimmed1 = self.trimed1, trimmed2 = self.trimed2)
         _out_bam = RNA_filter_out + '/aligned.bam'
         _out_bed = RNA_filter_out + '/aligned.bed'
@@ -191,8 +130,7 @@ class sample_object():
                 ' -k 1 -x {index} {input} '\
                 '| samtools view -bS@{threads} - '\
                 '> {out_bam} ' \
-                '; samtools view -bf4 {out_bam}' \
-                '| bamToFastq -i - -fq {filtered_fq1} -fq2 {filtered_fq2}'\
+                '; samtools fastq -nf4 -1 {filtered_fq1} -2 {filtered_fq2} {out_bam}'\
                 '; cat {out_bam} '\
                 '| samtools view -bF2048 -F256 -F4 '\
                 '| bam_to_bed.py -i - -o {out_bed} '\

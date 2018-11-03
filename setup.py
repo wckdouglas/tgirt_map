@@ -10,5 +10,6 @@ setup(
     author_email='wckdouglas@gmail.com',
     license='MIT',
     packages=['tgirt_map'],
+    package_data={'tgirt_map': ['snakemake/*.smk']},
     scripts = glob.glob('bin/*.py')
 )

@@ -14,7 +14,7 @@ import sys
 ncRNA = ["sense_intronic","3prime_overlapping_ncRNA",'processed_transcript','TEC',
         'sense_overlapping','Other_lncRNA', 'macro_lncRNA','non_coding','known_ncrna', 'LRG_gene',
         'lincRNA','bidirectional_promoter_lncRNA', 'ribozyme','3prime_overlapping_ncrna']
-smncRNA = ['misc_RNA','snRNA','piRNA','scaRNA','sRNA','scRNA','Y_RNA','Y RNA', 'vt RNA','7SK','7SL']
+smncRNA = ['misc_RNA','snRNA','piRNA','scaRNA','sRNA','scRNA','Y_RNA','Y RNA', 'vt RNA','7SK','7SL', 'Y-RNA', 'vaultRNA']
 large_rRNA = ['28S_rRNA','18S_rRNA']
 small_rRNA = ['rRNA','5S_rRNA','58S_rRNA','5.8S_rRNA', 'rDNA']
 protein_coding = ['protein_coding','TR','IG']
@@ -39,9 +39,11 @@ def change_gene_type(x):
     return type
 
 def readDF(count_file_name):
-    df = pd.read_table(count_file_name, header=None)  \
-        .pipe(lambda d: d[[3,6,7,8]])
-    df.columns = ['name','type','id','count']
+    column_names = ['chroms','name','type','id','count']
+    df = pd.read_table(count_file_name, 
+                    names = column_names,
+                    usecols = [0, 3,6,7,8]) \
+        .pipe(lambda d: d[~((d['chrom'].str.contains('^chrM$|^[mM][tT]$')) & (d['type']=="piRNA") )])
     return df
 
 
@@ -90,7 +92,7 @@ def readSample(project_path, sample_id):
     smallRNA_df = read_direct_counts(smallRNA)
 
     rRNA_mt = project_path + '/' + sample_id + '/rRNA_mt/aligned.count'
-    rRNA_mt_df = read_direct_counts(rRNA_mt)
+    rRNA_mt_df = readDF(rRNA_mt)
 
     df = pd.concat([df, smallRNA_df, rRNA_mt_df],axis=0, sort=True) \
         .assign(sample_name = sample_id.replace('-','_'))  \

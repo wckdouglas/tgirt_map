@@ -24,10 +24,10 @@ def change_gene_type(x):
         type = 'Other ncRNA'
     elif re.search('TR|IG|protein',x):
         type = 'Protein coding'
+    elif x == 'tRNA' or x == 'Mt_tRNA':
+        type = 'tRNA'
     elif x.startswith('Mt_'):
         type = 'Mt'
-    elif x == 'tRNA':
-        type = 'tRNA'
     elif x in small_rRNA or x in large_rRNA:
         type = 'rRNA'
     elif x in smncRNA:
@@ -83,20 +83,28 @@ def read_direct_counts(filename):
 
 
 def readSample(project_path, sample_id):    
-    print('Running %s' %sample_id)
-    count_file_path = project_path + '/Counts/RAW'
-    df = readDF(count_file_path + '/' + sample_id + '.counts')  \
-        .pipe(lambda d: d[~((d['chrom'].str.contains('^chrM$|^[mM][tT]$')) & (d['type']=="piRNA") )])
 
-    smallRNA = project_path + '/' + sample_id + '/smallRNA/aligned.count'
-    smallRNA_df = read_direct_counts(smallRNA)
+    try:
+        print('Running %s' %sample_id)
+        count_file_path = project_path + '/Counts/RAW'
 
-    rRNA_mt = project_path + '/' + sample_id + '/rRNA_mt/aligned.count'
-    rRNA_mt_df = readDF(rRNA_mt)
+        df = readDF(count_file_path + '/' + sample_id + '.counts')  \
+            .pipe(lambda d: d[~((d['chroms'].str.contains('^chrM$|^[mM][tT]$')) & (d['type']=="piRNA") )]) \
+            .filter(['name', 'type','id', 'count'])
 
-    df = pd.concat([df, smallRNA_df, rRNA_mt_df],axis=0, sort=True) \
-        .assign(sample_name = sample_id.replace('-','_'))  \
-        .assign(grouped_type = lambda d: d.type.map(change_gene_type))
+        smallRNA = project_path + '/' + sample_id + '/smallRNA/aligned.count'
+        smallRNA_df = read_direct_counts(smallRNA)
+
+        rRNA_mt = project_path + '/' + sample_id + '/rRNA_mt/aligned.count'
+        rRNA_mt_df = readDF(rRNA_mt) \
+            .filter(['name', 'type','id', 'count'])
+
+        df = pd.concat([df, smallRNA_df, rRNA_mt_df],axis=0, sort=True) \
+            .assign(sample_name = sample_id.replace('-','_'))  \
+            .assign(grouped_type = lambda d: d.type.map(change_gene_type))
+    except KeyError:
+        sys.exit('Error: '+ sample_id)
+            
     return df
 
 

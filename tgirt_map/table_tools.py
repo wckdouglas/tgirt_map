@@ -42,8 +42,7 @@ def readDF(count_file_name):
     column_names = ['chroms','name','type','id','count']
     df = pd.read_table(count_file_name, 
                     names = column_names,
-                    usecols = [0, 3,6,7,8]) \
-        .pipe(lambda d: d[~((d['chrom'].str.contains('^chrM$|^[mM][tT]$')) & (d['type']=="piRNA") )])
+                    usecols = [0, 3,6,7,8]) 
     return df
 
 
@@ -86,7 +85,8 @@ def read_direct_counts(filename):
 def readSample(project_path, sample_id):    
     print('Running %s' %sample_id)
     count_file_path = project_path + '/Counts/RAW'
-    df = readDF(count_file_path + '/' + sample_id + '.counts') 
+    df = readDF(count_file_path + '/' + sample_id + '.counts')  \
+        .pipe(lambda d: d[~((d['chrom'].str.contains('^chrM$|^[mM][tT]$')) & (d['type']=="piRNA") )])
 
     smallRNA = project_path + '/' + sample_id + '/smallRNA/aligned.count'
     smallRNA_df = read_direct_counts(smallRNA)

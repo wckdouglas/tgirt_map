@@ -1,7 +1,7 @@
 WORKING_DIR=$(pwd)
 REF=$WORKING_DIR/test_map/ref
 cd scripts
-snakemake -s make_ref.smk -p -j 1 --config test=1 path=$REF
+snakemake -s make_ref.smk -p -j 1 --config test=1 path=$REF -F
 cd $WORKING_DIR
 
 

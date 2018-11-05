@@ -131,14 +131,18 @@ BAM_TO_BED_COMMAND = 'bam_to_bed.py -m 5 -M 1000000 -i {input.BAM} -o {output.BE
 
 
 # pipeline starts
-rule all:
-    input:
-        ALL_COUNT_FILE,
-        REPEAT_COUNT_FILE,
+OUTPUT_FILES = [ALL_COUNT_FILE,
         SNC_RNA_COUNT,
         UNIVEC_COUNT,
-        mt_rRNA_COUNT,
-        PRIMARY_NO_SNC_REPEAT_BAM,
+        mt_rRNA_COUNT]
+    
+if RMSK and RMSK_INDEX:
+    OUTPUT_FILES.extend([REPEAT_COUNT_FILE,
+            PRIMARY_NO_SNC_REPEAT_BAM])
+
+rule all:
+    input:
+        OUTPUT_FILES
 
 rule generate_all_count:
     input:

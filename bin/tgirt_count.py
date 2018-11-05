@@ -107,7 +107,7 @@ def getopt():
     mapper_args(mapping)
     
     # table subparser
-    table_tool = subparsers.add_parser("table", 
+    table_tool = subparsers.add_parser("count", 
                             help = "make count table")
     table_args(table_tool)
     return parser.parse_args()
@@ -121,9 +121,11 @@ def snake_map(args):
     options = 'snakemake -s {}/tgirt_map.smk {} -p -j 24 --config '.format(snakefile_dir, force)
     for key, value in vars(args).items():
         if key != "subcommand":
-            if value == True:
+            if value == True :
                 value = 1
             elif value == False:
+                value = 0
+            elif value == None:
                 value = 0
 
             options += '{}={} '.format(key, value) 
@@ -197,7 +199,7 @@ def main():
 #        else:
 #            tgirtmap(args)
     
-    elif args.subcommand == 'table':
+    elif args.subcommand == 'count':
         make_table(args.project_path)
 
 

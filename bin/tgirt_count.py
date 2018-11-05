@@ -121,12 +121,10 @@ def snake_map(args):
     options = 'snakemake -s {}/tgirt_map.smk {} -p -j 24 --config '.format(snakefile_dir, force)
     for key, value in vars(args).items():
         if key != "subcommand":
-            if value == True :
+            if not value:
+                value = 0
+            elif value == True:
                 value = 1
-            elif value == False:
-                value = 0
-            elif value is None:
-                value = 0
 
             options += '{}={} '.format(key, value) 
 

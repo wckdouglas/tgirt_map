@@ -125,7 +125,7 @@ def snake_map(args):
                 value = 1
             elif value == False:
                 value = 0
-            elif value == None:
+            elif value is None:
                 value = 0
 
             options += '{}={} '.format(key, value) 

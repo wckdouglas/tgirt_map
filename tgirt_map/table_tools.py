@@ -97,7 +97,8 @@ def readSample(project_path, sample_id):
 
         rRNA_mt = project_path + '/' + sample_id + '/rRNA_mt/aligned.count'
         rRNA_mt_df = readDF(rRNA_mt) \
-            .filter(['name', 'type','id', 'count'])
+            .query(" type!='piRNA' ") \
+            .filter(['name', 'type','id', 'count']) 
 
         df = pd.concat([df, smallRNA_df, rRNA_mt_df],axis=0, sort=True) \
             .assign(sample_name = sample_id.replace('-','_'))  \

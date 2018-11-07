@@ -93,6 +93,12 @@ def mapper_args(parser):
 def table_args(parser):
     parser.add_argument('-i', '--project_path', help = 'TGIRT map output folder', required=True)
 
+def stat_args(parser):
+    parser.add_argument('-i', '--project_path', help = 'TGIRT map output folder', required=True)
+    parser.add_argument('-r', '--regex', help = 'Sample name regex', default= '001')
+    parser.add_argument('-f', '--force', help = 'Sample name regex', action = 'store_true')
+    parser.add_argument('-p', '--threads', default=3, type=int, 
+              help = 'number of cores to be used for the pipeline (at least 3, default: 3)')
 
 def getopt():
     parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),
@@ -110,15 +116,23 @@ def getopt():
     table_tool = subparsers.add_parser("count", 
                             help = "make count table")
     table_args(table_tool)
+
+    # mapping stat subparser
+    stat_table_tool = subparsers.add_parser("stats", 
+                            help = "make mapping stat table")
+    stat_args(stat_table_tool)
     return parser.parse_args()
 
 def snake_map(args):
-
+    '''
+    generate snakemake run command for mapping
+    '''
     snakefile_dir = pkg_resources.resource_filename('tgirt_map', 'snakemake')
     force = ''
     if args.rerun:
         force = '-F'
-    options = 'snakemake -s {}/tgirt_map.smk {} -p -j 24 --config '.format(snakefile_dir, force)
+    options = 'snakemake -s {}/tgirt_map.smk {} -p -j {} --config '\
+            .format(snakefile_dir, force, args.threads)
     for key, value in vars(args).items():
         if key != "subcommand":
             if not value:
@@ -136,6 +150,9 @@ def snake_map(args):
 
 
 def tgirtmap(args):
+    '''
+    old mapping method
+    '''
     programname = sys.argv[0]
     start = time.time()
 
@@ -189,6 +206,21 @@ def tgirtmap(args):
     print('Finished: %s in %.3f hr\n' %(process_sample.samplename ,usedTime/3600), file=sys.stderr)
     return 0
 
+def make_stat_table(args):
+    snakefile_dir = pkg_resources.resource_filename('tgirt_map', 'snakemake')
+    options = 'snakemake -s {}/tgirt_map.smk -p -j {} '\
+        .format(snakefile_dir,  args.threads)
+
+    options += '--config regex={regex} PATH={args.project_path}'
+    if args.force:
+        options += ' -F '
+
+    print (options)
+    os.system(options)
+
+
+
+
 def main():
     args = getopt()
     if args.subcommand == 'map':
@@ -199,6 +231,9 @@ def main():
     
     elif args.subcommand == 'count':
         make_table(args.project_path)
+
+    elif args.subcommand == 'stats':
+        make_stat_table(args)
 
 
 

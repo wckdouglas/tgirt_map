@@ -418,7 +418,7 @@ rule make_hisat_multi:
         MULTI = HISAT_MULTI_BAM
     
     shell:
-        'split_uniq_bam.py -i {input.BAM} -o {params.OUT_PREFIX} -a bowtie2'
+        'split_uniq_bam.py -i {input.BAM} -o {params.OUT_PREFIX} -a hisat2'
 
 
 rule bowtie_align:

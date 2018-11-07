@@ -2,6 +2,7 @@ import glob
 import re
 import os
 import pandas as pd
+from tgirt_map.table_tools import read_flag_stat
 
 
 PATH = config['PATH']
@@ -119,26 +120,6 @@ rule trimmed_stat:
     shell:
         "zgrep -c '^+$' {input} > {output}"
 
-
-def read_flag_stat(filename):
-    info = open(filename,'r').readlines()
-    stat_df = {}
-    stat_df['read1'] = get_number(get_line(info, 'read1'))
-    stat_df['mapped'] = get_number(get_line(info, 'mapped'))
-    stat_df['supplementary'] = get_number(get_line(info, 'supplementary'))
-    stat_df['proper pair'] = get_number(get_line(info, 'properly paired'))
-    stat_df['secondary'] = get_number(get_line(info, 'secondary'))
-    return stat_df
-
-def get_number(line):
-    return int(line.split(' ')[0])
-
-def get_line(lines, keyword):
-    return_line = ''
-    for line in lines:
-        if keyword in line:
-            return_line += line
-    return return_line
 
 map_cat = ['trimmed', 'UniVec_contam', 'rRNA_mt', 'smallRNA', 
         'HISAT2', 'HISAT2_unique', 'BOWTIE2','BOWTIE2_unique']

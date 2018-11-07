@@ -72,7 +72,7 @@ rule make_table:
         #for FLAGSTAT in input['FLAGSTATS']:
         for FLAGSTAT in FLAGSTATS:
             stat_df = read_flag_stat(FLAGSTAT)
-            in_read = stat_df['read1']
+            in_read = stat_df['read1'] - stat_df['secondary']/2
             mapped_read = (stat_df['mapped'] - stat_df['secondary'] - stat_df['supplementary'])/2
             fs_df.append((in_read, mapped_read, FLAGSTAT))
         

@@ -208,10 +208,12 @@ def tgirtmap(args):
 
 def make_stat_table(args):
     snakefile_dir = pkg_resources.resource_filename('tgirt_map', 'snakemake')
-    options = 'snakemake -s {}/tgirt_map.smk -p -j {} '\
+    options = 'snakemake -s {}/collect_stat.smk -p -j {} '\
         .format(snakefile_dir,  args.threads)
 
-    options += '--config regex={regex} PATH={args.project_path}'
+    options += '--config regex={regex} PATH={project_path}' \
+        .format(regex = args.regex, project_path = args.project_path)
+
     if args.force:
         options += ' -F '
 

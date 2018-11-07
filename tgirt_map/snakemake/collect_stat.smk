@@ -9,6 +9,7 @@ FOLDERS = glob.glob(PATH + '/*')
 regex = config['regex']
 SAMPLENAMES = map(os.path.basename,FOLDERS)
 SAMPLENAMES = list(filter(lambda x: re.search(regex, x), SAMPLENAMES))
+print('Running: %s' %'\n'.join(SAMPLENAMES))
 FEATURES = ['bowtie','hisat','rRNA_mt','smallRNA', 'UniVec']
 MAPPERS = ['bowtie','hisat']
 

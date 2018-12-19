@@ -48,7 +48,7 @@ rule combine_table:
             .loc[:, map_cat] \
             .reset_index()\
             .assign(mapping_rate = lambda d: d.filter(['rRNA_mt','smallRNA','HISAT2','BOWTIE2']).sum(axis=1)/(d[map_cat[0]] - d[map_cat[1]]))\
-            .to_csv(output['TABLE'], sep='\t', index=False)
+            .to_csv(output['TABLE'], sep=',', index=False)
 
     
 

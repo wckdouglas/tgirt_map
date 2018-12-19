@@ -130,8 +130,6 @@ def make_table(project_path):
     print('Written %s' %tablename)
 
 
-
-
 #### flagstat read ###
 def read_flag_stat(filename):
     info = open(filename,'r').readlines()

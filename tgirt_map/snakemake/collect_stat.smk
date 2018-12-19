@@ -15,7 +15,7 @@ FEATURES = ['bowtie','hisat','rRNA_mt','smallRNA', 'UniVec']
 MAPPERS = ['bowtie','hisat']
 
 # define varible
-STAT_TABLE = PATH + '/mapping_stat.tsv'
+STAT_TABLE = PATH + '/mapping_stat.csv'
 SAMPLE_FOLDER_TEMPLATE = PATH + '/{SAMPLENAME}'
 BAM_TEMPLATE = SAMPLE_FOLDER_TEMPLATE + '/{FEATURE}/aligned.bam'
 FLAGSTAT_TEMPLATE = BAM_TEMPLATE.replace('.bam','.flagstat')
@@ -23,7 +23,7 @@ UNIQUE_BAM_TEMPLATE = SAMPLE_FOLDER_TEMPLATE + '/{MAPPER}/{MAPPER}.unique.bam'
 UNIQUE_FLAGSTAT_TEMPLATE = UNIQUE_BAM_TEMPLATE.replace('.bam','.flagstat')
 TRIMMED_FQ = SAMPLE_FOLDER_TEMPLATE + '/Trimmed/trim.1.fq.gz'
 TRIMMED_TXT = TRIMMED_FQ.replace('.1.fq.gz','.count')
-SAMPLE_STAT_TABLE = SAMPLE_FOLDER_TEMPLATE + '/stat_table.tsv'
+SAMPLE_STAT_TABLE = SAMPLE_FOLDER_TEMPLATE + '/stat_table.csv'
 
 rule all:
     input:
@@ -86,7 +86,7 @@ rule make_table:
             .filter(['col_name','value']) \
             .sort_values('col_name')  
         
-        fs_df.to_csv(output['TABLE'], index=False, sep='\t')
+        fs_df.to_csv(output['TABLE'], index=False, sep=',')
 
 
 rule make_unique_stat:

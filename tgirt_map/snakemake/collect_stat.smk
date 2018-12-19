@@ -39,7 +39,7 @@ rule combine_table:
 
     run:
         def read_tab(fn):
-            return pd.read_table(fn) \
+            return pd.read_csv(fn) \
                 .assign(samplename = os.path.basename(os.path.dirname(fn)))
         pd.concat(map(read_tab, input['TABLES']))\
             .pipe(pd.pivot_table, index=['samplename'],

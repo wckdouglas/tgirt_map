@@ -33,10 +33,10 @@ def atropos_trimming(config, input, output):
         smart_seq_CDS = 'AAGCAGTGGTATCAACGCAGAGTAC'
         switch_oligo = 'AGTGGTATCAACGCAGAGTACGGGG'
 
-        fwd_byproduct = fwd_byproduct + ' -a A{100} -a T{100} -b T{100} -b A{100} ' +\
+        R2R = 'A{100} -a T{100} -b T{100} -b A{100} ' +\
                 '-g {fwd} -g {rvs} -b {fwd} -b {rvs} -a {fwd} -a {rvs}  '\
                 .format(fwd = smart_seq_CDS, rvs = switch_oligo)
-        rvs_byproduct = rvs_byproduct + ' -A A{100} -A T{100} -B A{100} -B T{100} ' + \
+        R1R = 'A{100} -A T{100} -B A{100} -B T{100} ' + \
                 '-G {fwd} -G {rvs} -B {fwd} -B {rvs} -A {fwd} -A {rvs}  '\
                 .format(fwd = smart_seq_CDS, rvs = switch_oligo)
 
@@ -53,7 +53,9 @@ def atropos_trimming(config, input, output):
             .format(threads = config['threads'], prefix = output['FQ1'].split('.')[0])
 
     if not config['trim_aggressive']:
-        shared_options += '--error-rate=0.1 --overlap 3 --quality-cutoff=20  --aligner insert '
+        shared_options += '--error-rate=0.1 --overlap 3 --quality-cutoff=20  ' 
+        if not config['polyA']:
+            shared_options += ' --aligner insert '
 
     else:
         '''
@@ -94,6 +96,7 @@ def atropos_trimming(config, input, output):
                         shared_options = shared_options,
                         trimed1 = output['FQ1'], 
                         trimed2 = output['FQ2'])
+    print (command)
     return command
 
 

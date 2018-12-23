@@ -656,7 +656,7 @@ rule trim:
         #trimming = fastp_trimming if config['fastp'] else atropos_trimming
         command = atropos_trimming(config, input, output)
         print(command)
-        os.system(command)
+        shell(command)
 
 
 def count_rRNA(RNA, start, end):

@@ -96,7 +96,6 @@ def atropos_trimming(config, input, output):
                         shared_options = shared_options,
                         trimed1 = output['FQ1'], 
                         trimed2 = output['FQ2'])
-    print (command)
     return command
 
 

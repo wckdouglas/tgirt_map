@@ -685,7 +685,7 @@ def count_rRNA(RNA, start, end):
 def count_bed(inbed, out_count):
     count_dict = Counter()
 
-    if STRAND == "fwd"
+    if STRAND == "fwd":
         needed_strand = '+'
     elif STRAND == "rvs":
         needed_strand = '-'

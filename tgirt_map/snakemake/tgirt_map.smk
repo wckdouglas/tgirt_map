@@ -24,6 +24,10 @@ NOVEL_SPLICE = config["novel_splice"]
 POLYA = config["polyA"]
 MULTI = config["multi"]
 SAMPLENAME = config["samplename"]
+STRAND = config['strand']
+STRAND_FLAG = {'fwd':'-s',
+                'rvs':'-S',
+                'both':' '}[STRAND]
 
 # setup path
 COUNT_PATH = OUTPATH + '/Counts'
@@ -125,7 +129,7 @@ BAM_EXTRACT_COMMAND = 'bedtools pairtobed -s -f 0.01 '\
 
 RNA_COUNT_COMMAND = 'bedtools coverage '\
         '-a {params.ANNOTATION} -b {input.BED} '\
-        '-s -counts -F 0.1 > {output.COUNT_FILE}'
+        '{params.STRAND_FLAG} -counts -F 0.1 > {output.COUNT_FILE}'
 
 BAM_TO_BED_COMMAND = 'bam_to_bed.py -m 5 -M 1000000 -i {input.BAM} -o {output.BED}'
 
@@ -161,7 +165,8 @@ rule generate_lRNA_count:
         BED = PRIMARY_BED
     
     params:
-        ANNOTATION = BEDPATH + '/genes_no_sncRNA_rRNA_tRNA.bed'
+        ANNOTATION = BEDPATH + '/genes_no_sncRNA_rRNA_tRNA.bed',
+        STRAND_FLAG = STRAND_FLAG
     
     output:
         COUNT_FILE = NO_SNC_COUNT
@@ -174,7 +179,8 @@ rule generate_snc_count:
         BED = PRIMARY_SNC_BED
 
     params:
-        ANNOTATION = BEDPATH + '/sncRNA_no_tRNA.bed'
+        ANNOTATION = BEDPATH + '/sncRNA_no_tRNA.bed',
+        STRAND_FLAG = STRAND_FLAG
 
     output:
         COUNT_FILE = SNC_COUNT
@@ -679,12 +685,18 @@ def count_rRNA(RNA, start, end):
 def count_bed(inbed, out_count):
     count_dict = Counter()
 
+    if STRAND == "fwd"
+        needed_strand = '+'
+    elif STRAND == "rvs":
+        needed_strand = '-'
+    elif STRAND == "both":
+        needed_strand == "+-"
     with open(inbed, 'r') as inb:
         for line in inb:
             fields = line.rstrip().split('\t')
             RNA = fields[0]
             strand = fields[5]
-            if strand == '+':
+            if strand in needed_strand:
                 if not RNA.startswith('gi'):
                     count_dict[RNA] += 1
                 else:

@@ -100,7 +100,7 @@ def readSample(project_path, sample_id):
             .query(" type!='piRNA' ") \
             .filter(['name', 'type','id', 'count']) 
 
-        df = pd.concat([df, smallRNA_df, rRNA_mt_df],axis=0, sort=True) \
+        df = pd.concat([df, smallRNA_df, rRNA_mt_df],axis=0) \
             .assign(sample_name = sample_id.replace('-','_'))  \
             .assign(grouped_type = lambda d: d.type.map(change_gene_type))
     except KeyError:
@@ -116,7 +116,7 @@ def make_table(project_path):
     dfFunc = partial(readSample, project_path)
     dfs = Pool(12).map(dfFunc, sample_ids)
 
-    df = pd.concat(dfs, axis=0, sort=True) \
+    df = pd.concat(dfs, axis=0) \
         .assign(count = lambda d: d['count'].astype(int)) \
         .pipe(pd.pivot_table,
             index = ['id','grouped_type','type','name'],  

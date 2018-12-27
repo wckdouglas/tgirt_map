@@ -53,6 +53,9 @@ def mapper_args(parser):
               help = 'trim all R2R to R2R junction')
     parser.add_argument('--polyA', action='store_true',  
               help = 'trim for polyA/T')
+    parser.add_argument('--strand', default='fwd', 
+              choices = ['fwd','rvs','both'],  
+              help = 'strand for counting')
     parser.add_argument('--umi', default=0, type=int,
               help = "Number of UMI bases from 5' of R1 (default = 0)")
     parser.add_argument('--multi', default=10, type=int,

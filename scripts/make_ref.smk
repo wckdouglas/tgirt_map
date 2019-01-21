@@ -87,11 +87,9 @@ rule all:
         BOWTIE2_mt_rRNA_INDEX,
         SMALL_RNA_BED,
         SPLIT_GENE_BED,
-        piRNA_BED,
         EXONS,
         SPLICE_SITE,
         BOWTIE2_RMSK_INDEX,
-        RMSK_BED
 
 #### make RMSK ###
 rule download_rmsk:

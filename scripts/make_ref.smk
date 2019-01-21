@@ -15,6 +15,7 @@ BOWTIE2_GENOME_INDEX = expand(GENOME_PREFIX + '.{NUMBER}.bt2', NUMBER = range(1,
 
 
 GENE_BED = ANNOTATION_PATH + '/genes.bed'
+ENSEMBL_GENES = GENE_BED.replace('.bed','.ensembl.bed')
 GENE_GTF = ANNOTATION_PATH + '/genes.gtf'
 SPLICE_SITE = ANNOTATION_PATH + '/splicesites.tsv'
 EXONS = ANNOTATION_PATH + '/exons.bed'
@@ -203,7 +204,7 @@ rule make_gene_bed:
         GTF = GENE_GTF
     
     output:
-        BED = GENE_BED
+        BED = ENSEMBL_GENES
     
     shell:
         'python gtf_to_bed.py {input.GTF} > {output.BED}'
@@ -254,13 +255,26 @@ rule make_rRNA_mt_index:
 
 
 ##### small RNA ########
+rule combine_bed:
+    input:
+        piRNA = piRNA_BED,
+        GENES = ENSEMBL_GENES,
+        tRNA = tRNA_BED
+
+    output:
+        GENE_BED
+
+    shell:
+        'zcat {input.piRNA} '\
+        '| cat {input.tRNA} {input.GENES} - '\
+        '| sort -k1,1 -k2,2n -k3,3n '\
+        '> {output}'
+
 rule download_piRNA:
     input:
-        GENE_BED
 
     params:
         LINK = piRNA
-
 
     output:
         piRNA_BED
@@ -271,8 +285,7 @@ rule download_piRNA:
         '| sort -k1,1 -k2,2n -k3,3n '\
         "| awk '$5 > 1000  {{print $0, \"piRNA\", \"piRNA\"}}' OFS='\\t'" \
         '| bgzip '\
-        '> {output} ' \
-        '; cat {output}| zcat >> {input}'
+        '> {output} ' 
 
 
 
@@ -294,17 +307,16 @@ rule download_gtRNA:
         '; tar zxvf {output.ZIP} --directory {params.DIR}'
 
 
+
 rule make_tRNA_bed:
     input:
         BED = GTRNA_BED,
-        GENE_BED = GENE_BED
 
     output:
         BED = tRNA_BED
     
     shell:
-        'cp {input.BED} {output.BED} '\
-        ';cat {output.BED} | cut -f1-8 >> {input.GENE_BED}'
+        'cat {input.BED} | cut -f1-8 > {output.BED} '
 
 rule make_nucleo_tRNA:
     input:

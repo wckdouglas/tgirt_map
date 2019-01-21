@@ -269,7 +269,7 @@ rule download_piRNA:
         'curl {params.LINK} '\
         '| zcat '\
         '| sort -k1,1 -k2,2n -k3,3n '\
-        "| awk '{{print $0, \"piRNA\", \"piRNA\"}}' OFS='\\t'" \
+        "| awk '$5 > 1000  {{print $0, \"piRNA\", \"piRNA\"}}' OFS='\\t'" \
         '| bgzip '\
         '> {output} ' \
         '; cat {output}| zcat >> {input}'

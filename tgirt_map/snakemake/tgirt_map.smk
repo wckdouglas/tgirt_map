@@ -1,6 +1,7 @@
 from collections import defaultdict, Counter
 from pandas import DataFrame
 from tgirt_map.trim_function import atropos_trimming, fastp_trimming
+import os
 
 # set up config
 FASTQ1 = config["fastq1"]
@@ -662,7 +663,7 @@ rule trim:
         #trimming = fastp_trimming if config['fastp'] else atropos_trimming
         command = atropos_trimming(config, input, output)
         print(command)
-        shell(command)
+        os.system(command)
 
 
 def count_rRNA(RNA, start, end):

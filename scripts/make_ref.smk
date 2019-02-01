@@ -22,6 +22,7 @@ EXONS = ANNOTATION_PATH + '/exons.bed'
 BED12 = ANNOTATION_PATH + '/protein_coding.bed12'
 
 UniVec_PREFIX = ANNOTATION_PATH + '/UniVec_core'
+Ecoli_FA = ANNOTATION_PATH + '/BL21_DE3.fa'
 UniVec_FA = UniVec_PREFIX + '.fa'
 BOWTIE2_UNIVEC_INDEX = expand(UniVec_PREFIX + '.{NUMBER}.bt2', NUMBER = range(1,5))
 
@@ -69,6 +70,7 @@ tRNA_REF = 'http://gtrnadb.ucsc.edu/genomes/eukaryota/Hsapi19/hg19-tRNAs.tar.gz'
 piRNA = 'http://www.regulatoryrna.org/database/piRNA/download/archive/v1.0/bed/piR_hg19_v1.0.bed.gz'
 MIR_LINK = 'ftp://mirbase.org/pub/mirbase/CURRENT/hairpin_high_conf.fa.gz'
 UNI_VEC_LINK = 'ftp://ftp.ncbi.nlm.nih.gov/pub/UniVec/UniVec_Core'
+ECOLI_LINK = 'ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/022/665/GCA_000022665.2_ASM2266v1/GCA_000022665.2_ASM2266v1_genomic.fna.gz'
 RMSK_LINK = 'http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/rmsk.txt.gz'
 
 def test_filter(test_bool):
@@ -314,7 +316,9 @@ rule make_tRNA_bed:
         BED = tRNA_BED
     
     shell:
-        'cat {input.BED} | cut -f1-8 > {output.BED} '
+        'cat {input.BED} '\
+        "| awk {{'print $1,$2,$3,$4,$5,$6, \"tRNA\", $4'}} OFS='\\t' "\
+        '> {output.BED} '
 
 rule make_nucleo_tRNA:
     input:
@@ -466,6 +470,7 @@ rule make_smallRNA_index:
 #### Univec ###################
 rule download_univec:
     input:
+        Ecoli_FA
     
     params:
         LINK = UNI_VEC_LINK
@@ -474,7 +479,20 @@ rule download_univec:
         FA = UniVec_FA
     
     shell:
-        'curl {params.LINK} > {output.FA}'
+        'curl {params.LINK} | cat - {input} > {output.FA}'
+
+
+rule download_ecoli:
+    input:
+    
+    params:
+        LINK = ECOLI_LINK
+
+    output:
+        FA = Ecoli_FA
+
+    shell:
+        'curl {params.LINK} |zcat > {output.FA}'
 
 
 rule make_univec_index:

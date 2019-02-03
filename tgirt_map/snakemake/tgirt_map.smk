@@ -388,6 +388,8 @@ rule filter_multi:
         HISAT = HISAT_MULTI_BAM,
         BOWTIE = BOWTIE_MULTI_BAM
 
+    params:
+        GENE_MODEL = BEDPATH + '/genes.bed.gz'
     output:
         BAM = MULTI_BAM,
         FILTERED_BAM = FILTERED_MULTI_BAM
@@ -395,7 +397,9 @@ rule filter_multi:
     shell:
         'samtools cat {input.HISAT} {input.BOWTIE} ' \
         '| tee {output.BAM} '\
-        '| reduce_multi_reads.py --infile - --outfile {output.FILTERED_BAM} '\
+        '| reduce_multi_reads.py --infile - '\
+        '--outfile {output.FILTERED_BAM} '\
+        '--gene_model {params.GENE_MODEL} '\
         '--bam_in --bam_out'
 
 rule make_bowtie_multi:

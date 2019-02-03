@@ -15,6 +15,7 @@ BOWTIE2_GENOME_INDEX = expand(GENOME_PREFIX + '.{NUMBER}.bt2', NUMBER = range(1,
 
 
 GENE_BED = ANNOTATION_PATH + '/genes.bed'
+GENE_BED_INDEX = GENE_BED + '.gz.tbi'
 ENSEMBL_GENES = GENE_BED.replace('.bed','.ensembl.bed')
 GENE_GTF = ANNOTATION_PATH + '/genes.gtf'
 SPLICE_SITE = ANNOTATION_PATH + '/splicesites.tsv'
@@ -92,6 +93,7 @@ rule all:
         EXONS,
         SPLICE_SITE,
         BOWTIE2_RMSK_INDEX,
+        GENE_BED_INDEX
 
 #### make RMSK ###
 rule download_rmsk:
@@ -255,6 +257,21 @@ rule make_rRNA_mt_index:
 
 
 ##### small RNA ########
+rule index_bed:
+    input:
+        GENE_BED
+
+    output:
+        GENE_BED_INDEX
+
+    shell:
+        'cat {input} '\
+        '| sort -k1,1 -k2,2n -k3,3 '\
+        '| bgzip '\
+        '> {input}.gz '\
+        '; tabix -p bed {input}.gz'
+
+
 rule combine_bed:
     input:
         piRNA = piRNA_BED,

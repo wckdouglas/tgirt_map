@@ -33,10 +33,10 @@ def atropos_trimming(config, input, output):
         smart_seq_CDS = 'AAGCAGTGGTATCAACGCAGAGTAC'
         switch_oligo = 'AGTGGTATCAACGCAGAGTACGGGG'
 
-        R2R = 'A{100} -a T{100} -b T{100} -b A{100} ' +\
+        R2R = 'A{100} -a T{100} -b T{100} -b A{100} -G A{100} -G T{100} ' +\
                 '-g {fwd} -g {rvs} -b {fwd} -b {rvs} -a {fwd} -a {rvs}  '\
                 .format(fwd = smart_seq_CDS, rvs = switch_oligo)
-        R1R = 'A{100} -A T{100} -B A{100} -B T{100} ' + \
+        R1R = 'A{100} -A T{100} -B A{100} -B T{100} -G A{100} -G T{100}' + \
                 '-G {fwd} -G {rvs} -B {fwd} -B {rvs} -A {fwd} -A {rvs}  '\
                 .format(fwd = smart_seq_CDS, rvs = switch_oligo)
 
@@ -71,6 +71,7 @@ def atropos_trimming(config, input, output):
         for base in 'ACTG':
             trim_pattern = base + '{100}'
             shared_options += ' -A {pat} -a {pat} '.format(pat = trim_pattern)
+        shared_options += ' -G T{100} '
 
     if config['umi'] == 0:
         command = 'atropos trim {option} {adaptors} {shared_options} '\

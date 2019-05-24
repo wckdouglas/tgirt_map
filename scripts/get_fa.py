@@ -12,7 +12,7 @@ def get_sequences(pysam_genome_fa, bed_line, out_bed_handle, out_fa_handle):
     fields = bed_line.strip().split('\t')
     strand = fields[5]
     chrom = fields[0]
-    start, end = int(fields[1]), int(fields[2])
+    start, end = int(fields[1]) - 1, int(fields[2]) #bed is 1-based
     gname = fields[3]
     gtype = fields[6]
 

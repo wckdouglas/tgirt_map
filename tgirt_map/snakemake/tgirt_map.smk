@@ -372,7 +372,6 @@ rule make_primary_bam:
 
     params:
         THREADS = THREADS,
-        TEMP = COMBINED_FOLDER
 
     output:
         BAM = PRIMARY_BAM
@@ -380,7 +379,7 @@ rule make_primary_bam:
     shell:
         'samtools cat {input.MULTI} {input.HISAT} {input.BOWTIE} '\
         '| filter_soft_clip.py -s 0.1 -b 0.2 -i - -o - --pe '\
-        '| samtools sort -n@ {params.THREADS} -O bam -T {params.TEMP} -o {output.BAM}'
+        '| samtools collate --output-fmt BAM -@ {params.THREADS} -O - > {output.BAM}'
 
 
 rule filter_multi:
